@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/storage/token_storage.dart';
 import 'auth_event.dart';
@@ -8,12 +9,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
 
-  AuthBloc({
-    ApiClient? apiClient,
-    TokenStorage? tokenStorage,
-  })  : _apiClient = apiClient ?? ApiClient(),
-        _tokenStorage = tokenStorage ?? TokenStorage(),
-        super(AuthInitial()) {
+  AuthBloc({ApiClient? apiClient, TokenStorage? tokenStorage})
+    : _apiClient = apiClient ?? ApiClient(),
+      _tokenStorage = tokenStorage ?? TokenStorage(),
+      super(AuthInitial()) {
     on<LoginWithAccessKey>(_onLogin);
     on<Logout>(_onLogout);
   }
@@ -43,20 +42,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       await _tokenStorage.saveToken(token, role, userId);
 
-      emit(AuthSuccess(
-        accessToken: token,
-        role: role,
-        userId: userId,
-      ));
+      emit(AuthSuccess(accessToken: token, role: role, userId: userId));
     } catch (e) {
       emit(AuthFailure(message: _extractError(e)));
     }
   }
 
-  Future<void> _onLogout(
-    Logout event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onLogout(Logout event, Emitter<AuthState> emit) async {
     try {
       await _apiClient.post('/auth/logout');
     } catch (_) {}
@@ -64,10 +56,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthInitial());
   }
 
-  String _extractError(dynamic error) {
-    final str = error.toString();
-    if (str.contains('401')) return 'Access key is invalid';
-    if (str.contains('403')) return 'Access key is disabled or expired';
+  String _extractError(Object error) {
+    final status = error is DioException ? error.response?.statusCode : null;
+    if (status == 401) return 'Access key is invalid';
+    if (status == 403) return 'Access key is disabled or expired';
     return 'Something went wrong. Please try again.';
   }
 }

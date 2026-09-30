@@ -1,23 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/widgets/word_of_day_card.dart';
+import 'package:frontend/core/widgets/your_pond_card.dart';
+import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    return BlocProvider(
+      create: (_) => WordbookBloc()..add(LoadWordbook()),
+      child: const _HomeContent(),
+    );
+  }
+}
 
-    return Padding(
-      padding: EdgeInsets.all(isMobile ? 16 : 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+class _HomeContent extends StatelessWidget {
+  const _HomeContent();
+
+  static const _quickCards = [
+    _QuickCard(
+      icon: Icons.calendar_month,
+      title: 'Weekly Documents',
+      subtitle: 'Browse by week and day',
+      route: '/weekly',
+    ),
+    _QuickCard(
+      icon: Icons.translate,
+      title: 'Vocabulary',
+      subtitle: 'Explore vocabulary lists',
+      route: '/search?type=vocabulary',
+    ),
+    _QuickCard(
+      icon: Icons.format_quote,
+      title: 'Sentence Patterns',
+      subtitle: 'Useful structures',
+      route: '/search?type=sentence_pattern',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 768;
+        final padding = compact ? 16.0 : 32.0;
+        final contentWidth = constraints.maxWidth - padding * 2;
+        final sideBySide = contentWidth >= 900;
+        final scroll = !sideBySide || constraints.maxHeight < 760;
+        final heading = <Widget>[
           Text(
             'Welcome to IELTS Knowledge Hub',
             style: TextStyle(
-              fontSize: isMobile ? 22 : 28,
+              fontSize: compact ? 22 : 28,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
@@ -26,69 +64,133 @@ class HomePage extends StatelessWidget {
           Text(
             'Your personal knowledge base for IELTS preparation.',
             style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
+              fontSize: compact ? 14 : 16,
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 32),
-          if (isMobile)
+          if (contentWidth < 650)
             Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _QuickCard(
-                  icon: Icons.calendar_month,
-                  title: 'Weekly Documents',
-                  subtitle: 'Browse by week and day',
-                  route: '/weekly',
-                ),
+                _quickCards[0],
                 const SizedBox(height: 12),
-                _QuickCard(
-                  icon: Icons.translate,
-                  title: 'Vocabulary',
-                  subtitle: 'Explore vocabulary lists',
-                  route: '/search?type=vocabulary',
-                ),
+                _quickCards[1],
                 const SizedBox(height: 12),
-                _QuickCard(
-                  icon: Icons.format_quote,
-                  title: 'Sentence Patterns',
-                  subtitle: 'Useful structures',
-                  route: '/search?type=sentence_pattern',
-                ),
+                _quickCards[2],
               ],
             )
           else
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _QuickCard(
-                    icon: Icons.calendar_month,
-                    title: 'Weekly Documents',
-                    subtitle: 'Browse by week and day',
-                    route: '/weekly',
-                  ),
-                ),
+                Expanded(child: _quickCards[0]),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _QuickCard(
-                    icon: Icons.translate,
-                    title: 'Vocabulary',
-                    subtitle: 'Explore vocabulary lists',
-                    route: '/search?type=vocabulary',
-                  ),
-                ),
+                Expanded(child: _quickCards[1]),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _QuickCard(
-                    icon: Icons.format_quote,
-                    title: 'Sentence Patterns',
-                    subtitle: 'Useful structures',
-                    route: '/search?type=sentence_pattern',
-                  ),
-                ),
+                Expanded(child: _quickCards[2]),
               ],
             ),
-        ],
-      ),
+          const SizedBox(height: 24),
+        ];
+        final cards = _LearningCards(
+          sideBySide: sideBySide,
+          scrollable: scroll,
+        );
+
+        if (scroll) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ...heading,
+                if (sideBySide) SizedBox(height: 460, child: cards) else cards,
+              ],
+            ),
+          );
+        }
+        return Padding(
+          padding: EdgeInsets.all(padding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ...heading,
+              Expanded(child: cards),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LearningCards extends StatelessWidget {
+  const _LearningCards({required this.sideBySide, required this.scrollable});
+
+  final bool sideBySide;
+  final bool scrollable;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<WordbookBloc, WordbookState>(
+      builder: (context, state) {
+        final word = WordOfDayData.forDate(DateTime.now());
+        final saved = state.items
+            .where((item) => item.word.toLowerCase() == word.word.toLowerCase())
+            .firstOrNull;
+        final pond = YourPondCard(
+          // Keep zero until real study streak tracking is available.
+          streakDays: 0,
+          savedWords: state.items.length,
+          pondHeight: scrollable ? 260 : null,
+        );
+        final wordCard = WordOfDayCard(
+          word: word,
+          isSaved: saved != null,
+          onSaveChanged: (save) {
+            final bloc = context.read<WordbookBloc>();
+            if (!save && saved != null) {
+              bloc.add(DeleteWord(saved.id));
+            } else if (save && saved == null) {
+              final now = DateTime.now();
+              bloc.add(
+                AddWord(
+                  LocalWordbookItem(
+                    id: 'word-of-day:${word.word.toLowerCase()}',
+                    word: word.word,
+                    meaning: word.meaningVi,
+                    example: word.example,
+                    note: '${word.ipa} · ${word.partOfSpeech}',
+                    sourceReferenceType: SourceType.manual,
+                    createdAt: now,
+                    updatedAt: now,
+                  ),
+                ),
+              );
+            }
+          },
+        );
+
+        if (sideBySide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 2, child: pond),
+              const SizedBox(width: 16),
+              Expanded(child: wordCard),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            pond,
+            const SizedBox(height: 16),
+            SizedBox(height: 400, child: wordCard),
+          ],
+        );
+      },
     );
   }
 }

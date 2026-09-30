@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/storage/token_storage.dart';
 import 'package:frontend/core/widgets/grid_background.dart';
+import 'package:frontend/core/widgets/vu_mon_progress.dart';
 import 'package:frontend/features/home/presentation/views/home_page.dart';
 import 'package:frontend/features/documents/presentation/bloc/weekly_documents_bloc.dart';
 import 'package:frontend/features/documents/presentation/views/weekly_documents_page.dart';
@@ -212,18 +213,39 @@ class _Sidebar extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.border),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _SectionLabel('Knowledge'),
-                  ..._visibleUserTabs,
-                  if (role == 'ADMIN') ...[
-                    const _SectionLabel('Admin'),
-                    ..._visibleAdminTabs,
-                  ],
-                ],
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _SectionLabel('Knowledge'),
+                            ..._visibleUserTabs,
+                            if (role == 'ADMIN') ...[
+                              const _SectionLabel('Admin'),
+                              ..._visibleAdminTabs,
+                            ],
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: VuMonProgress(
+                          // Lesson completion is not tracked yet.
+                          completed: 0,
+                          background: AppColors.surface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -297,7 +319,7 @@ class _TabItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
-        color: isActive ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+        color: isActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(6),
         child: InkWell(
           borderRadius: BorderRadius.circular(6),
