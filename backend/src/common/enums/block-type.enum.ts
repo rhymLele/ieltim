@@ -1,0 +1,9 @@
+export enum BlockType {
+  HEADING = 'HEADING',
+  TEXT = 'TEXT',
+  VOCABULARY = 'VOCABULARY',
+  SENTENCE_PATTERN = 'SENTENCE_PATTERN',
+  QUOTE = 'QUOTE',
+  LINK = 'LINK',
+  DIVIDER = 'DIVIDER',
+}

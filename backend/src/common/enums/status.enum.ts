@@ -1,0 +1,7 @@
+export enum Status {
+  ACTIVE = 'ACTIVE',
+  DISABLED = 'DISABLED',
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED',
+}
