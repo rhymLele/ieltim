@@ -7,7 +7,7 @@ class ApiClient {
   late final Dio _dio;
 
   static String get _baseUrl => kReleaseMode
-      ? 'https://ieltim-web.onrender.com/api'
+      ? 'https://ieltim.onrender.com/api'
       : 'http://localhost:3000/api';
 
   ApiClient() {
