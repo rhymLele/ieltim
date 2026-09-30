@@ -29,11 +29,12 @@ async function bootstrap() {
     path.join(process.cwd(), 'frontend/build/web'),
   ];
   const distPath = possiblePaths.find((p) => fs.existsSync(p)) || '';
-  if (fs.existsSync(distPath)) {
+  if (distPath && fs.existsSync(distPath)) {
     const expressApp = app.getHttpAdapter().getInstance();
     expressApp.use(express.static(distPath));
-    expressApp.get('*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    expressApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
       if (req.path.startsWith('/api') || req.path === '/health') return next();
+      if (req.method !== 'GET') return next();
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
