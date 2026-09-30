@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   late final Dio _dio;
 
+  static String get _baseUrl => kReleaseMode
+      ? 'https://ieltim-web.onrender.com/api'
+      : 'http://localhost:3000/api';
+
   ApiClient() {
     _dio = Dio(BaseOptions(
-      baseUrl: 'http://localhost:3000/api',
+      baseUrl: _baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ));
