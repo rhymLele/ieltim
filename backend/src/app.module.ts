@@ -38,32 +38,47 @@ import { Practice } from './lessons/entities/practice.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: config.get<number>('DB_PORT', 5432),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
-        entities: [
-          User,
-          AccessKey,
-          Document,
-          DocumentBlock,
-          Vocabulary,
-          Collocation,
-          SentencePattern,
-          Tag,
-          IeltsContext,
-          Comment,
-          WebResource,
-          LessonVocabulary,
-          LessonSentencePattern,
-          TheoryBlock,
-          Practice,
-        ],
-        synchronize: true,
-      }),
+      useFactory: (config: ConfigService) => {
+        const entities = [
+          User, AccessKey, Document, DocumentBlock,
+          Vocabulary, Collocation, SentencePattern,
+          Tag, IeltsContext, Comment, WebResource,
+          LessonVocabulary, LessonSentencePattern, TheoryBlock, Practice,
+        ];
+
+        const databaseUrl = config.get('DATABASE_URL');
+        if (databaseUrl) {
+          const url = new URL(databaseUrl);
+          return {
+            type: 'postgres',
+            host: url.hostname,
+            port: parseInt(url.port) || 5432,
+            username: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            database: url.pathname.replace(/^\//, ''),
+            entities,
+            synchronize: true,
+          } as any;
+        }
+
+        const host = config.get('DB_HOST');
+        if (!host) {
+          throw new Error(
+            'DB not configured. Set DATABASE_URL or DB_HOST + DB_USER + DB_PASSWORD + DB_NAME.',
+          );
+        }
+
+        return {
+          type: 'postgres',
+          host,
+          port: parseInt(config.get('DB_PORT', '5432')),
+          username: config.get('DB_USER', ''),
+          password: config.get('DB_PASSWORD', ''),
+          database: config.get('DB_NAME', ''),
+          entities,
+          synchronize: true,
+        } as any;
+      },
     }),
     AuthModule,
     UsersModule,
