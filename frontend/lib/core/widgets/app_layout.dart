@@ -193,15 +193,21 @@ class _Sidebar extends StatelessWidget {
       color: AppColors.surface,
       child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'IELTS Knowledge Hub',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Image.asset('assets/images/app_icon.png', width: 28, height: 28),
+                const SizedBox(width: 10),
+                const Text(
+                  'IELTS Hub',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
           ),
           const Divider(height: 1, color: AppColors.border),
@@ -376,13 +382,19 @@ class _MobileLayout extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'IELTS Knowledge Hub',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
+        title: Row(
+          children: [
+            Image.asset('assets/images/app_icon.png', width: 24, height: 24),
+            const SizedBox(width: 8),
+            const Text(
+              'IELTS Hub',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
         ),
         backgroundColor: AppColors.background,
         elevation: 0,

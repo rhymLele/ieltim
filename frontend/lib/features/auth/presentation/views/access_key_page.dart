@@ -23,10 +23,10 @@ class AccessKeyPage extends StatelessWidget {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.menu_book, size: 64, color: AppColors.primary),
+                    Image.asset('assets/images/app_icon.png', width: 72, height: 72),
                     const SizedBox(height: 16),
                     const Text(
-                      'IELTS Knowledge Hub',
+                      'IELTS Hub',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
