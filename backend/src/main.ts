@@ -17,7 +17,7 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
   app.enableCors();
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['health'] });
 
   const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
   await app.listen(port);
