@@ -29,7 +29,17 @@ class _WordbookPageState extends State<WordbookPage> {
   String _selectedTag = 'general';
   String? _editingId;
 
-  static const _tags = ['general', 'noun', 'verb', 'adjective', 'adverb', 'collocation', 'phrasal', 'idiom', 'academic'];
+  static const _tags = [
+    'general',
+    'noun',
+    'verb',
+    'adjective',
+    'adverb',
+    'collocation',
+    'phrasal',
+    'idiom',
+    'academic',
+  ];
 
   @override
   void dispose() {
@@ -44,7 +54,10 @@ class _WordbookPageState extends State<WordbookPage> {
     final word = _wordController.text.trim();
     if (word.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Word is required'), backgroundColor: _delete),
+        const SnackBar(
+          content: Text('Word is required'),
+          backgroundColor: _delete,
+        ),
       );
       return;
     }
@@ -57,8 +70,12 @@ class _WordbookPageState extends State<WordbookPage> {
       final updated = LocalWordbookItem(
         id: existing.id,
         word: word,
-        meaning: _meaningController.text.trim().isEmpty ? null : _meaningController.text.trim(),
-        example: _exampleController.text.trim().isEmpty ? null : _exampleController.text.trim(),
+        meaning: _meaningController.text.trim().isEmpty
+            ? null
+            : _meaningController.text.trim(),
+        example: _exampleController.text.trim().isEmpty
+            ? null
+            : _exampleController.text.trim(),
         tag: _selectedTag,
         sourceReferenceId: existing.sourceReferenceId,
         sourceReferenceType: existing.sourceReferenceType,
@@ -74,8 +91,12 @@ class _WordbookPageState extends State<WordbookPage> {
       final item = LocalWordbookItem(
         id: '${now.microsecondsSinceEpoch}',
         word: word,
-        meaning: _meaningController.text.trim().isEmpty ? null : _meaningController.text.trim(),
-        example: _exampleController.text.trim().isEmpty ? null : _exampleController.text.trim(),
+        meaning: _meaningController.text.trim().isEmpty
+            ? null
+            : _meaningController.text.trim(),
+        example: _exampleController.text.trim().isEmpty
+            ? null
+            : _exampleController.text.trim(),
         tag: _selectedTag,
         sourceReferenceType: SourceType.manual,
         createdAt: now,
@@ -113,19 +134,34 @@ class _WordbookPageState extends State<WordbookPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete "${item.word}"?', style: const TextStyle(color: _primaryDark, fontWeight: FontWeight.w600)),
-        content: const Text('This will permanently remove the word from your wordbook.', style: TextStyle(color: _textSecondary)),
+        title: Text(
+          'Delete "${item.word}"?',
+          style: const TextStyle(
+            color: _primaryDark,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: const Text(
+          'This will permanently remove the word from your wordbook.',
+          style: TextStyle(color: _textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: _textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
               context.read<WordbookBloc>().add(DeleteWord(item.id));
               Navigator.pop(ctx);
             },
-            child: const Text('Delete', style: TextStyle(color: _delete, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: _delete, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -138,7 +174,10 @@ class _WordbookPageState extends State<WordbookPage> {
     final data = Uint8List.fromList(utf8.encode(json));
     await Clipboard.setData(ClipboardData(text: json));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('JSON copied to clipboard'), duration: Duration(seconds: 2)),
+      const SnackBar(
+        content: Text('JSON copied to clipboard'),
+        duration: Duration(seconds: 2),
+      ),
     );
   }
 
@@ -156,17 +195,24 @@ class _WordbookPageState extends State<WordbookPage> {
 
       for (final e in list) {
         final item = LocalWordbookItem.fromJson(e as Map<String, dynamic>);
-        if (!existing.any((x) => x.id == item.id) && !existing.any((x) => x.word == item.word)) {
+        if (!existing.any((x) => x.id == item.id) &&
+            !existing.any((x) => x.word == item.word)) {
           bloc.add(AddWord(item));
           imported++;
         }
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$imported words imported'), duration: const Duration(seconds: 2)),
+        SnackBar(
+          content: Text('$imported words imported'),
+          duration: const Duration(seconds: 2),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid JSON file'), backgroundColor: _delete),
+        const SnackBar(
+          content: Text('Invalid JSON file'),
+          backgroundColor: _delete,
+        ),
       );
     }
   }
@@ -274,15 +320,25 @@ class _WordbookPageState extends State<WordbookPage> {
                         child: DropdownButton<String>(
                           value: _selectedTag,
                           isExpanded: true,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 1,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
                           iconSize: 18,
-                          style: const TextStyle(fontSize: 14, color: _primaryDark),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: _primaryDark,
+                          ),
                           items: _tags
-                              .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                              .map(
+                                (t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => _selectedTag = v ?? 'general'),
+                          onChanged: (v) =>
+                              setState(() => _selectedTag = v ?? 'general'),
                         ),
                       ),
                     ),
@@ -291,29 +347,27 @@ class _WordbookPageState extends State<WordbookPage> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _buildField(
             label: 'MEANING / DEFINITION',
             controller: _meaningController,
             placeholder: 'English or Vietnamese — your choice',
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _buildField(
             label: 'EXAMPLE SENTENCE',
             controller: _exampleController,
             placeholder: 'Write your own example sentence...',
             isMultiline: true,
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
           Row(
             children: [
               _PillButton(
                 label: _editingId != null ? 'Save changes' : 'Add word',
                 onPressed: _addOrSaveWord,
               ),
-              if (_editingId != null) ...[
-                const SizedBox(width: 12),
-              ],
+              if (_editingId != null) ...[const SizedBox(width: 12)],
               if (_editingId != null)
                 _PillOutlineButton(
                   label: 'Cancel edit',
@@ -355,9 +409,15 @@ class _WordbookPageState extends State<WordbookPage> {
             ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: GoogleFonts.instrumentSans(color: _textSecondary.withOpacity(0.6), fontSize: isLarge ? 16 : 14),
+              hintStyle: GoogleFonts.instrumentSans(
+                color: _textSecondary.withOpacity(0.6),
+                fontSize: isLarge ? 16 : 14,
+              ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: isLarge ? 16 : 14),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: isLarge ? 16 : 14,
+              ),
             ),
           ),
         ),
@@ -379,15 +439,29 @@ class _WordbookPageState extends State<WordbookPage> {
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: GoogleFonts.instrumentSans(fontSize: 14, color: _primaryDark),
+                  style: GoogleFonts.instrumentSans(
+                    fontSize: 14,
+                    color: _primaryDark,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Search your words...',
-                    hintStyle: GoogleFonts.instrumentSans(color: _textSecondary.withOpacity(0.6), fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, size: 18, color: _textSecondary),
+                    hintStyle: GoogleFonts.instrumentSans(
+                      color: _textSecondary.withOpacity(0.6),
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: _textSecondary,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
-                  onChanged: (v) => context.read<WordbookBloc>().add(SearchWords(v)),
+                  onChanged: (v) =>
+                      context.read<WordbookBloc>().add(SearchWords(v)),
                 ),
               ),
             ),
@@ -398,7 +472,10 @@ class _WordbookPageState extends State<WordbookPage> {
             const SizedBox(width: 16),
             Text(
               '${state.items.length} / ${state.items.length} words',
-              style: GoogleFonts.ibmPlexMono(fontSize: 12, color: _textSecondary),
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 12,
+                color: _textSecondary,
+              ),
             ),
           ],
         );
@@ -422,11 +499,13 @@ class _WordbookPageState extends State<WordbookPage> {
         }
         return Column(
           children: state.items
-              .map((item) => _WordCard(
-                    item: item,
-                    onEdit: () => _startEdit(item),
-                    onDelete: () => _confirmDelete(item),
-                  ))
+              .map(
+                (item) => _WordCard(
+                  item: item,
+                  onEdit: () => _startEdit(item),
+                  onDelete: () => _confirmDelete(item),
+                ),
+              )
               .toList(),
         );
       },
@@ -516,11 +595,16 @@ class _WordCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _WordCard({required this.item, required this.onEdit, required this.onDelete});
+  const _WordCard({
+    required this.item,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = '${item.createdAt.year}-${item.createdAt.month.toString().padLeft(2, '0')}-${item.createdAt.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${item.createdAt.year}-${item.createdAt.month.toString().padLeft(2, '0')}-${item.createdAt.day.toString().padLeft(2, '0')}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -550,7 +634,10 @@ class _WordCard extends StatelessWidget {
                     if (item.tag != null && item.tag!.isNotEmpty) ...[
                       const SizedBox(width: 10),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: _blueTagBg,
                           borderRadius: BorderRadius.circular(4),

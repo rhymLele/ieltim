@@ -118,6 +118,8 @@ List<TabPage> get allTabs => [
   ),
 ];
 
+const _mobileBreakpoint = 840.0;
+
 class AppLayout extends StatefulWidget {
   final Widget? child;
 
@@ -147,36 +149,47 @@ class _AppLayoutState extends State<AppLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < _mobileBreakpoint;
 
-    if (isMobile) {
-      return _MobileLayout(activeIndex: _activeIndex, role: _role);
-    }
+        if (isMobile) {
+          return _MobileLayout(
+            activeIndex: _activeIndex,
+            role: _role,
+            tabs: _visibleTabs,
+            onTabSelected: (index) => setState(() => _activeIndex = index),
+            onLogout: _logout,
+          );
+        }
 
-    final isTablet = MediaQuery.of(context).size.width < 1024;
-    final sidebarWidth = isTablet ? 200.0 : 240.0;
+        final isTablet = constraints.maxWidth < 1024;
+        final sidebarWidth = isTablet ? 200.0 : 240.0;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Row(
-        children: [
-          SizedBox(
-            width: sidebarWidth,
-            child: _Sidebar(
-              tabs: _visibleTabs,
-              activeIndex: _activeIndex,
-              role: _role,
-              onTabSelected: (index) => setState(() => _activeIndex = index),
-              onLogout: _logout,
-            ),
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Row(
+            children: [
+              SizedBox(
+                width: sidebarWidth,
+                child: _Sidebar(
+                  tabs: _visibleTabs,
+                  activeIndex: _activeIndex,
+                  role: _role,
+                  onTabSelected: (index) =>
+                      setState(() => _activeIndex = index),
+                  onLogout: _logout,
+                ),
+              ),
+              Expanded(
+                child: GridBackgroundContainer(
+                  child: _visibleTabs[_activeIndex].builder(context),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: GridBackgroundContainer(
-              child: _visibleTabs[_activeIndex].builder(context),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -185,6 +198,172 @@ class _AppLayoutState extends State<AppLayout> {
     if (mounted) context.go('/access');
   }
 }
+
+// ─── Shared NavPanel ─────────────────────────────────────────────────────────
+
+class NavPanel extends StatefulWidget {
+  const NavPanel({
+    super.key,
+    required this.tabs,
+    required this.activeIndex,
+    required this.inDrawer,
+    required this.onTabSelected,
+  });
+
+  final List<TabPage> tabs;
+  final int activeIndex;
+  final bool inDrawer;
+  final ValueChanged<int> onTabSelected;
+
+  @override
+  State<NavPanel> createState() => _NavPanelState();
+}
+
+class _NavPanelState extends State<NavPanel> {
+  static const _itemHeight = 44.0;
+  static const _labelHeight = 32.0;
+  static const _indicatorColor = Color(0xFFE7C9BC);
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    // Tab của user trước, rồi nhãn "Admin" và các tab admin (chỉ có khi
+    // tài khoản là admin). Index vẫn là vị trí trong [widget.tabs].
+    final userTabs = widget.tabs.where((t) => !t.adminOnly).toList();
+    final adminTabs = widget.tabs.where((t) => t.adminOnly).toList();
+    final hasAdmin = adminTabs.isNotEmpty;
+    final rows = [...userTabs, ...adminTabs];
+    double rowTop(int row) => row < userTabs.length
+        ? row * _itemHeight
+        : row * _itemHeight + _labelHeight;
+    final activeRow = widget.activeIndex < widget.tabs.length
+        ? rows.indexOf(widget.tabs[widget.activeIndex])
+        : -1;
+
+    Widget item(TabPage tab) {
+      final index = widget.tabs.indexOf(tab);
+      final isActive = index == widget.activeIndex;
+      return SizedBox(
+        height: _itemHeight,
+        child: InkWell(
+          onTap: () => widget.onTabSelected(index),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.inDrawer ? 24 : 20,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  tab.icon,
+                  size: 18,
+                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    tab.label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!widget.inDrawer)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: _SectionLabel('Knowledge'),
+          ),
+        SizedBox(
+          height: rows.length * _itemHeight + (hasAdmin ? _labelHeight : 0),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (activeRow >= 0)
+                AnimatedPositioned(
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : const Duration(milliseconds: 280),
+                  curve: Curves.easeInOut,
+                  top: rowTop(activeRow),
+                  left: widget.inDrawer ? 12 : 8,
+                  right: widget.inDrawer ? 12 : 8,
+                  height: _itemHeight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _indicatorColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ...userTabs.map(item),
+                  if (hasAdmin)
+                    SizedBox(
+                      height: _labelHeight,
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            widget.inDrawer ? 24 : 16,
+                            0,
+                            16,
+                            6,
+                          ),
+                          child: const _SectionLabel('Admin'),
+                        ),
+                      ),
+                    ),
+                  ...adminTabs.map(item),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+// ─── Desktop Sidebar ─────────────────────────────────────────────────────────
 
 class _Sidebar extends StatelessWidget {
   final List<TabPage> tabs;
@@ -210,7 +389,9 @@ class _Sidebar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
-              children: [Image.asset('assets/images/app_logo.png', height: 30)],
+              children: [
+                Image.asset('assets/images/logo_horizontal.png', height: 30),
+              ],
             ),
           ),
           Padding(
@@ -226,28 +407,20 @@ class _Sidebar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         child: VuMonProgress(
-                          // Lesson completion is not tracked yet, so the koi
-                          // keeps climbing as decoration instead of showing
-                          // fake counts.
                           repeat: true,
                           background: AppColors.surface,
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _SectionLabel('Knowledge'),
-                            ..._visibleUserTabs,
-                            if (role == 'ADMIN') ...[
-                              const _SectionLabel('Admin'),
-                              ..._visibleAdminTabs,
-                            ],
-                          ],
+                        child: NavPanel(
+                          tabs: tabs,
+                          activeIndex: activeIndex,
+                          inDrawer: false,
+                          onTabSelected: onTabSelected,
                         ),
                       ),
                     ],
@@ -262,109 +435,6 @@ class _Sidebar extends StatelessWidget {
           ),
           _UserSection(role: role, onLogout: onLogout),
         ],
-      ),
-    );
-  }
-
-  List<Widget> get _visibleUserTabs =>
-      tabs.where((t) => !t.adminOnly).toList().asMap().entries.map((e) {
-        return _TabItem(
-          icon: e.value.icon,
-          label: e.value.label,
-          isActive: e.key == activeIndex,
-          onTap: () => onTabSelected(e.key),
-        );
-      }).toList();
-
-  List<Widget> get _visibleAdminTabs {
-    final adminTabs = tabs.where((t) => t.adminOnly).toList();
-    final userTabCount = tabs.where((t) => !t.adminOnly).length;
-    return adminTabs.asMap().entries.map((e) {
-      return _TabItem(
-        icon: e.value.icon,
-        label: e.value.label,
-        isActive: (e.key + userTabCount) == activeIndex,
-        onTap: () => onTabSelected(e.key + userTabCount),
-      );
-    }).toList();
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _TabItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Material(
-        color: isActive
-            ? AppColors.primary.withValues(alpha: 0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(6),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isActive
-                          ? AppColors.primary
-                          : AppColors.textPrimary,
-                      fontWeight: isActive
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -416,62 +486,237 @@ class _UserSection extends StatelessWidget {
   }
 }
 
+// ─── Mobile Layout ───────────────────────────────────────────────────────────
+
 class _MobileLayout extends StatelessWidget {
   final int activeIndex;
   final String? role;
+  final List<TabPage> tabs;
+  final ValueChanged<int> onTabSelected;
+  final VoidCallback onLogout;
 
-  const _MobileLayout({required this.activeIndex, required this.role});
+  const _MobileLayout({
+    required this.activeIndex,
+    required this.role,
+    required this.tabs,
+    required this.onTabSelected,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final visibleTabs = role == 'ADMIN'
-        ? allTabs
-        : allTabs.where((t) => !t.adminOnly).toList();
+    final userName = role == 'ADMIN' ? 'Admin' : 'User';
+    final avatarLetter = userName.isNotEmpty ? userName[0].toUpperCase() : 'U';
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset('assets/images/app_icon.png', width: 24, height: 24),
-            const SizedBox(width: 8),
-            const Text(
-              'IELTS Hub',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
         backgroundColor: AppColors.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Builder(
+          builder: (context) => Tooltip(
+            message: 'Menu',
+            child: IconButton(
+              icon: const Icon(Icons.menu, color: Color(0xFF2A1418)),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo_horizontal.png', height: 24),
+          ],
+        ),
+        titleSpacing: 0,
         actions: [
-          PopupMenuButton<int>(
-            onSelected: (index) {
-              final tab = visibleTabs[index];
-              if (tab.route != null) {
-                context.go(tab.route!);
-              }
-            },
-            itemBuilder: (context) => visibleTabs.asMap().entries.map((e) {
-              return PopupMenuItem(
-                value: e.key,
-                child: Row(
-                  children: [
-                    Icon(e.value.icon, size: 18),
-                    const SizedBox(width: 8),
-                    Text(e.value.label),
-                  ],
-                ),
-              );
-            }).toList(),
+          Tooltip(
+            message: 'Tìm kiếm',
+            child: IconButton(
+              icon: const Icon(Icons.search, color: Color(0xFF2A1418)),
+              onPressed: () {
+                final idx = tabs.indexWhere((t) => t.label == 'Search');
+                if (idx >= 0) onTabSelected(idx);
+              },
+            ),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: const Color(0xFFEFDCCB)),
+        ),
+      ),
+      drawer: _MobileDrawer(
+        tabs: tabs,
+        activeIndex: activeIndex,
+        role: role,
+        userName: userName,
+        avatarLetter: avatarLetter,
+        onTabSelected: (index) {
+          onTabSelected(index);
+          Scaffold.of(context).closeDrawer();
+        },
+        onLogout: onLogout,
       ),
       body: IndexedStack(
         index: activeIndex,
-        children: visibleTabs.map((tab) => tab.builder(context)).toList(),
+        children: tabs.map((tab) => tab.builder(context)).toList(),
+      ),
+    );
+  }
+}
+
+class _MobileDrawer extends StatelessWidget {
+  final List<TabPage> tabs;
+  final int activeIndex;
+  final String? role;
+  final String userName;
+  final String avatarLetter;
+  final ValueChanged<int> onTabSelected;
+  final VoidCallback onLogout;
+
+  const _MobileDrawer({
+    required this.tabs,
+    required this.activeIndex,
+    required this.role,
+    required this.userName,
+    required this.avatarLetter,
+    required this.onTabSelected,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: const Color(0xFFF3E5D5),
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final drawerHeight = constraints.maxHeight;
+            final showVuMon = drawerHeight >= 560;
+            return Column(
+              children: [
+                // Header: logo + close
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 16),
+                  child: Row(
+                    children: [
+                      Image.asset('assets/images/app_logo.png', height: 28),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Color(0xFF2A1418)),
+                        tooltip: 'Đóng menu',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                // User info
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF800020),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          avatarLetter,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2A1418),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '0 ngày liên tiếp',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B4A4F),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Menu items
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: NavPanel(
+                      tabs: tabs,
+                      activeIndex: activeIndex,
+                      inDrawer: true,
+                      onTabSelected: onTabSelected,
+                    ),
+                  ),
+                ),
+                // VuMonProgress - hide if not enough space
+                if (showVuMon)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: VuMonProgress(
+                      repeat: true,
+                      background: const Color(0xFFF3E5D5),
+                    ),
+                  ),
+                // Logout
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: onLogout,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.logout,
+                            size: 18,
+                            color: Color(0xFF6B4A4F),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Đăng xuất',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B4A4F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
