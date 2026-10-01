@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
+import 'package:frontend/core/constants/preview_auth.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/storage/token_storage.dart';
 import 'auth_event.dart';
@@ -29,6 +30,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
+      if (PreviewAuth.enabled && event.key.trim() == PreviewAuth.accessKey) {
+        await _tokenStorage.saveToken(
+          PreviewAuth.token,
+          PreviewAuth.role,
+          PreviewAuth.userId,
+        );
+        emit(
+          AuthSuccess(
+            accessToken: PreviewAuth.token,
+            role: PreviewAuth.role,
+            userId: PreviewAuth.userId,
+          ),
+        );
+        return;
+      }
+
       final response = await _apiClient.post(
         '/auth/access-key',
         data: {'key': event.key},
@@ -50,7 +67,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogout(Logout event, Emitter<AuthState> emit) async {
     try {
-      await _apiClient.post('/auth/logout');
+      if (await _tokenStorage.getToken() != PreviewAuth.token) {
+        await _apiClient.post('/auth/logout');
+      }
     } catch (_) {}
     await _tokenStorage.clear();
     emit(AuthInitial());

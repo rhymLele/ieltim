@@ -6,6 +6,14 @@ import 'package:frontend/core/widgets/word_of_day_card.dart';
 import 'package:frontend/core/widgets/your_pond_card.dart';
 import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
 
+/// Greeting for the dashboard heading based on the hour of [time].
+String greetingFor(DateTime time) {
+  final hour = time.hour;
+  if (hour >= 5 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -53,7 +61,7 @@ class _HomeContent extends StatelessWidget {
         final scroll = !sideBySide || constraints.maxHeight < 760;
         final heading = <Widget>[
           Text(
-            'Welcome to IELTS Knowledge Hub',
+            greetingFor(DateTime.now()),
             style: TextStyle(
               fontSize: compact ? 22 : 28,
               fontWeight: FontWeight.bold,
@@ -93,10 +101,7 @@ class _HomeContent extends StatelessWidget {
             ),
           const SizedBox(height: 24),
         ];
-        final cards = _LearningCards(
-          sideBySide: sideBySide,
-          scrollable: scroll,
-        );
+        final cards = _LearningCards(sideBySide: sideBySide);
 
         if (scroll) {
           return SingleChildScrollView(
@@ -126,10 +131,9 @@ class _HomeContent extends StatelessWidget {
 }
 
 class _LearningCards extends StatelessWidget {
-  const _LearningCards({required this.sideBySide, required this.scrollable});
+  const _LearningCards({required this.sideBySide});
 
   final bool sideBySide;
-  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +147,9 @@ class _LearningCards extends StatelessWidget {
           // Keep zero until real study streak tracking is available.
           streakDays: 0,
           savedWords: state.items.length,
-          pondHeight: scrollable ? 260 : null,
+          // Side by side the row always has a bounded height (460 when the
+          // page scrolls), so the pond fills it; stacked it needs its own.
+          pondHeight: sideBySide ? null : 260,
         );
         final wordCard = WordOfDayCard(
           word: word,

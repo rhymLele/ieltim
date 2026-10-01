@@ -38,72 +38,85 @@ class TabPage {
 }
 
 List<TabPage> get allTabs => [
-      TabPage(
-        label: 'Home',
-        icon: Icons.home,
-        builder: (_) => const HomePage(),
-        route: '/home',
-      ),
-      TabPage(
-        label: 'Tài liệu web',
-        icon: Icons.description,
-        builder: (_) => BlocProvider(create: (_) => WebResourcesBloc()..add(LoadResources()), child: const WebResourcesPage()),
-        route: '/resources',
-      ),
-      TabPage(
-        label: 'Theo tuần',
-        icon: Icons.calendar_month,
-        builder: (_) => BlocProvider(create: (_) => WeeklyDocumentsBloc()..add(LoadDocuments(week: 1)), child: const WeeklyDocumentsPage()),
-        route: '/weekly',
-      ),
-      TabPage(
-        label: 'Sổ từ',
-        icon: Icons.book_outlined,
-        builder: (_) => BlocProvider(create: (_) => WordbookBloc()..add(LoadWordbook()), child: const WordbookPage()),
-        route: '/wordbook',
-      ),
-      TabPage(
-        label: 'Search',
-        icon: Icons.search,
-        builder: (_) => BlocProvider(create: (_) => SearchBloc(), child: const SearchPage()),
-        route: '/search',
-      ),
-      TabPage(
-        label: 'Quản lý tài liệu',
-        icon: Icons.edit_note,
-        builder: (_) => BlocProvider(create: (_) => AdminDocumentsBloc()..add(LoadAdminDocuments()), child: const AdminDocumentsPage()),
-        adminOnly: true,
-        route: '/admin',
-      ),
-      TabPage(
-        label: 'Từ vựng',
-        icon: Icons.translate,
-        builder: (_) => const AdminVocabulariesPage(),
-        adminOnly: true,
-        route: '/admin/vocabularies',
-      ),
-      TabPage(
-        label: 'Cấu trúc câu',
-        icon: Icons.format_quote,
-        builder: (_) => const AdminSentencePatternsPage(),
-        adminOnly: true,
-        route: '/admin/sentence-patterns',
-      ),
-      TabPage(
-        label: 'Tags',
-        icon: Icons.local_offer,
-        builder: (_) => const AdminTagsPage(),
-        adminOnly: true,
-        route: '/admin/tags',
-      ),
-      TabPage(
-        label: 'Access Keys',
-        icon: Icons.vpn_key,
-        builder: (_) => const AdminAccessKeysPage(),
-        adminOnly: true,
-        route: '/admin/access-keys',
-      ),
-    ];
+  TabPage(
+    label: 'Home',
+    icon: Icons.home,
+    builder: (_) => const HomePage(),
+    route: '/home',
+  ),
+  TabPage(
+    label: 'Tài liệu web',
+    icon: Icons.description,
+    builder: (_) => BlocProvider(
+      create: (_) => WebResourcesBloc()..add(LoadResources()),
+      child: const WebResourcesPage(),
+    ),
+    route: '/resources',
+  ),
+  TabPage(
+    label: 'Theo tuần',
+    icon: Icons.calendar_month,
+    builder: (_) => BlocProvider(
+      create: (_) => WeeklyDocumentsBloc()..add(LoadDocuments(week: 1)),
+      child: const WeeklyDocumentsPage(),
+    ),
+    route: '/weekly',
+  ),
+  TabPage(
+    label: 'Sổ từ',
+    icon: Icons.book_outlined,
+    builder: (_) => BlocProvider(
+      create: (_) => WordbookBloc()..add(LoadWordbook()),
+      child: const WordbookPage(),
+    ),
+    route: '/wordbook',
+  ),
+  TabPage(
+    label: 'Search',
+    icon: Icons.search,
+    builder: (_) =>
+        BlocProvider(create: (_) => SearchBloc(), child: const SearchPage()),
+    route: '/search',
+  ),
+  TabPage(
+    label: 'Quản lý tài liệu',
+    icon: Icons.edit_note,
+    builder: (_) => BlocProvider(
+      create: (_) => AdminDocumentsBloc()..add(LoadAdminDocuments()),
+      child: const AdminDocumentsPage(),
+    ),
+    adminOnly: true,
+    route: '/admin',
+  ),
+  TabPage(
+    label: 'Từ vựng',
+    icon: Icons.translate,
+    builder: (_) => const AdminVocabulariesPage(),
+    adminOnly: true,
+    route: '/admin/vocabularies',
+  ),
+  TabPage(
+    label: 'Cấu trúc câu',
+    icon: Icons.format_quote,
+    builder: (_) => const AdminSentencePatternsPage(),
+    adminOnly: true,
+    route: '/admin/sentence-patterns',
+  ),
+  TabPage(
+    label: 'Tags',
+    icon: Icons.local_offer,
+    builder: (_) => const AdminTagsPage(),
+    adminOnly: true,
+    route: '/admin/tags',
+  ),
+  TabPage(
+    label: 'Access Keys',
+    icon: Icons.vpn_key,
+    builder: (_) => const AdminAccessKeysPage(),
+    adminOnly: true,
+    route: '/admin/access-keys',
+  ),
+];
 
 class AppLayout extends StatefulWidget {
   final Widget? child;
@@ -197,21 +210,13 @@ class _Sidebar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
-              children: [
-                Image.asset('assets/images/app_icon.png', width: 28, height: 28),
-                const SizedBox(width: 10),
-                const Text(
-                  'IELTS Hub',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
+              children: [Image.asset('assets/images/app_logo.png', height: 30)],
             ),
           ),
-          const Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: const Divider(height: 1, color: AppColors.border),
+          ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) => SingleChildScrollView(
@@ -221,6 +226,16 @@ class _Sidebar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: VuMonProgress(
+                          // Lesson completion is not tracked yet, so the koi
+                          // keeps climbing as decoration instead of showing
+                          // fake counts.
+                          repeat: true,
+                          background: AppColors.surface,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -235,21 +250,16 @@ class _Sidebar extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: VuMonProgress(
-                          // Lesson completion is not tracked yet.
-                          completed: 0,
-                          background: AppColors.surface,
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-          const Divider(height: 1, color: AppColors.border),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: const Divider(height: 1, color: AppColors.border),
+          ),
           _UserSection(role: role, onLogout: onLogout),
         ],
       ),
@@ -319,7 +329,9 @@ class _TabItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
-        color: isActive ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+        color: isActive
+            ? AppColors.primary.withValues(alpha: 0.1)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(6),
         child: InkWell(
           borderRadius: BorderRadius.circular(6),
@@ -339,8 +351,12 @@ class _TabItem extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 13,
-                      color: isActive ? AppColors.primary : AppColors.textPrimary,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -377,13 +393,22 @@ class _UserSection extends StatelessWidget {
           ),
           Text(
             role ?? '',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 4),
           TextButton(
             onPressed: onLogout,
-            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-            child: const Text('Logout', style: TextStyle(color: Colors.red, fontSize: 12)),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+            ),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
           ),
         ],
       ),
@@ -399,8 +424,9 @@ class _MobileLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleTabs =
-        role == 'ADMIN' ? allTabs : allTabs.where((t) => !t.adminOnly).toList();
+    final visibleTabs = role == 'ADMIN'
+        ? allTabs
+        : allTabs.where((t) => !t.adminOnly).toList();
 
     return Scaffold(
       appBar: AppBar(

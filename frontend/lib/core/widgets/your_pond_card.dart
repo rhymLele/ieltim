@@ -99,27 +99,41 @@ class YourPondCard extends StatelessWidget {
           InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Expanded(
-                  child: Column(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const title = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Ao của bạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF2A1418))),
+                    SizedBox(height: 2),
+                    Text(
+                      'Mỗi ngày học liên tiếp thêm một chú cá. Chạm vào mặt nước thử xem.',
+                      style: TextStyle(fontSize: 13, color: _muted),
+                    ),
+                  ],
+                );
+                // Card hẹp (điện thoại): số liệu xuống dưới tiêu đề, căn trái.
+                final narrow = constraints.maxWidth < 420;
+                final align = narrow ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+                final stats = Wrap(
+                  spacing: 20,
+                  runSpacing: 8,
+                  children: [
+                    _CountUpStat(value: streakDays, label: 'ngày liên tiếp', color: primary, align: align),
+                    _CountUpStat(value: savedWords, label: 'từ đã lưu', color: primary, align: align),
+                  ],
+                );
+                if (narrow) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Ao của bạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF2A1418))),
-                      SizedBox(height: 2),
-                      Text(
-                        'Mỗi ngày học liên tiếp thêm một chú cá. Chạm vào mặt nước thử xem.',
-                        style: TextStyle(fontSize: 13, color: _muted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                _CountUpStat(value: streakDays, label: 'ngày liên tiếp', color: primary),
-                const SizedBox(width: 20),
-                _CountUpStat(value: savedWords, label: 'từ đã lưu', color: primary),
-              ],
+                    children: [title, const SizedBox(height: 12), stats],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [const Expanded(child: title), const SizedBox(width: 16), stats],
+                );
+              },
             ),
           ),
           const SizedBox(height: 12),
@@ -132,16 +146,22 @@ class YourPondCard extends StatelessWidget {
 }
 
 class _CountUpStat extends StatelessWidget {
-  const _CountUpStat({required this.value, required this.label, required this.color});
+  const _CountUpStat({
+    required this.value,
+    required this.label,
+    required this.color,
+    this.align = CrossAxisAlignment.end,
+  });
   final int value;
   final String label;
   final Color color;
+  final CrossAxisAlignment align;
 
   @override
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: align,
       mainAxisSize: MainAxisSize.min,
       children: [
         TweenAnimationBuilder<double>(

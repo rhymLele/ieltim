@@ -48,7 +48,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.enterText(find.byType(TextFormField), 'test-key');
+    await tester.enterText(find.byType(TextField), 'test-key');
     await tester.tap(find.text('Continue'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -60,7 +60,14 @@ void main() {
       final api = _LoginApi();
       await mount(tester, api);
       expect(find.byType(DragonLoader), findsOneWidget);
-      await tester.pump(const Duration(seconds: 8));
+      double progress() =>
+          tester.widget<DragonLoader>(find.byType(DragonLoader)).progress!;
+      await tester.pump(const Duration(seconds: 1));
+      final early = progress();
+      expect(early, greaterThan(0));
+      await tester.pump(const Duration(seconds: 7));
+      expect(progress(), greaterThan(early));
+      expect(progress(), lessThan(1));
       expect(find.text('Home loaded'), findsNothing);
       api.response.complete(
         Response(

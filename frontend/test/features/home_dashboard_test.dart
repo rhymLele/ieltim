@@ -51,6 +51,16 @@ void main() {
         tester.widget<YourPondCard>(find.byType(YourPondCard)).savedWords,
         1,
       );
+      // Saving must not bubble up to the card's flip gesture.
+      expect(find.text('Đã lưu vào Sổ từ'), findsOneWidget);
+      expect(find.text('Lật lại'), findsNothing);
+      await tester.tap(
+        find.text(WordOfDayData.forDate(DateTime.now()).meaningVi),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('TỪ CỦA NGÀY'), findsOneWidget);
+      expect(find.text('Đã lưu vào Sổ từ'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -67,7 +77,7 @@ void main() {
     expect(find.byType(VuMonProgress), findsOneWidget);
     await tester.ensureVisible(find.byType(VuMonProgress));
     await tester.pump();
-    expect(find.text('Tuần này: 0/5 chặng'), findsOneWidget);
+    expect(find.text('Thác Vũ Môn'), findsOneWidget);
     expect(find.text('Logout'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());

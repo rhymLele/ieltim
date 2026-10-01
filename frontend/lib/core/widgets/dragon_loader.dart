@@ -5,6 +5,9 @@
 // 1) Vòng lặp vô tận (không biết khi nào tải xong):
 //      const DragonLoader()
 //
+// 1b) Chạy đúng 1 lần (7 giây), thanh tiến trình chạy theo câu chuyện, xong gọi onFinished:
+//      DragonLoader(playOnce: true, onFinished: () => context.go('/home'))
+//
 // 2) Theo tiến độ thật (khuyên dùng): cá bơi lên theo progress, chờ ở chân thác;
 //    khi progress = 1 cá nhảy qua vũ môn, hóa rồng rồi gọi onFinished.
 //      DragonLoader(progress: p, onFinished: () => context.go('/home'))
@@ -21,6 +24,8 @@ class DragonLoader extends StatefulWidget {
   const DragonLoader({
     super.key,
     this.progress,
+    this.playOnce = false,
+    this.duration = const Duration(seconds: 7),
     this.onFinished,
     this.primary = FxColors.primary,
     this.background = FxColors.background,
@@ -30,6 +35,12 @@ class DragonLoader extends StatefulWidget {
 
   /// null = lặp vô tận. 0..1 = tiến độ tải thật.
   final double? progress;
+
+  /// true = chạy câu chuyện đúng 1 lần rồi gọi [onFinished] (bỏ qua [progress]).
+  final bool playOnce;
+
+  /// Độ dài một lần chạy (mặc định 7 giây).
+  final Duration duration;
   final VoidCallback? onFinished;
   final Color primary;
   final Color background;
@@ -42,7 +53,7 @@ class DragonLoader extends StatefulWidget {
 
 class _DragonLoaderState extends State<DragonLoader>
     with TickerProviderStateMixin {
-  static const _cycle = Duration(seconds: 7);
+  Duration get _cycle => widget.duration;
 
   /// Tiến trình câu chuyện 0..1: 0–0.43 bơi, 0.43–0.6 nhảy, 0.6–1 hóa rồng.
   late final AnimationController _story;
@@ -74,10 +85,20 @@ class _DragonLoaderState extends State<DragonLoader>
   @override
   void didUpdateWidget(covariant DragonLoader old) {
     super.didUpdateWidget(old);
-    if (old.progress != widget.progress) _start();
+    if (!widget.playOnce && old.progress != widget.progress) _start();
   }
 
   void _start() {
+    if (widget.playOnce) {
+      _story.duration = _cycle;
+      _story.forward(from: 0).then((_) {
+        if (mounted && !_finishedCalled) {
+          _finishedCalled = true;
+          widget.onFinished?.call();
+        }
+      });
+      return;
+    }
     final p = widget.progress;
     if (p == null) {
       if (!_story.isAnimating) _story.repeat();
@@ -160,7 +181,9 @@ class _DragonLoaderState extends State<DragonLoader>
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(999),
                           child: LinearProgressIndicator(
-                            value: widget.progress?.clamp(0.0, 1.0) ?? t,
+                            value: widget.playOnce
+                                ? t
+                                : (widget.progress?.clamp(0.0, 1.0) ?? t),
                             minHeight: 6,
                             color: widget.primary,
                             backgroundColor: const Color(0xFFEFDCCB),

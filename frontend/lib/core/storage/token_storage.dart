@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/core/constants/preview_auth.dart';
 
 class TokenStorage {
   Future<void> saveToken(String token, String role, String userId) async {
@@ -10,7 +11,9 @@ class TokenStorage {
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+    final token = prefs.getString('access_token');
+    if (!PreviewAuth.enabled && token == PreviewAuth.token) return null;
+    return token;
   }
 
   Future<String?> getRole() async {

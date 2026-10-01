@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/constants/preview_auth.dart';
 import 'package:frontend/core/widgets/dragon_loader.dart';
 import 'package:frontend/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:frontend/features/auth/presentation/bloc/auth_event.dart';
@@ -49,9 +50,7 @@ class _AccessKeyPageState extends State<AccessKeyPage> {
           body: loading
               ? SafeArea(
                   child: DragonLoader(
-                    // Authentication has no granular progress. Loop until the
-                    // token is stored, then finish the transformation once.
-                    progress: state is AuthSuccess ? 1 : null,
+                    playOnce: true,
                     onFinished: _finishLoading,
                   ),
                 )

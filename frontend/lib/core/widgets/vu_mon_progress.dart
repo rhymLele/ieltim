@@ -17,6 +17,15 @@
 //       );
 //     }),
 //   ),
+//
+// Chưa có dữ liệu chặng học: cá leo hết thác đúng 1 lần, vượt cổng rồi dừng ở
+// trên (chú thích không hiện số chặng):
+//
+//   VuMonProgress(playOnce: true)
+//
+// Hoặc lặp mãi: leo → lóe sáng → nghỉ → cá mờ đi rồi hiện lại ở chân thác:
+//
+//   VuMonProgress(repeat: true)
 
 import 'dart:math' as math;
 
@@ -29,23 +38,38 @@ import 'fx_common.dart';
 class VuMonProgress extends StatefulWidget {
   const VuMonProgress({
     super.key,
-    required this.completed,
+    this.completed = 0,
     this.total = 5,
+    this.playOnce = false,
+    this.repeat = false,
+    this.duration = const Duration(seconds: 4),
     this.primary = FxColors.primary,
     this.background = FxColors.sidebar,
     this.showCaption = true,
     this.onPassedGate,
-  }) : assert(total >= 2);
+  }) : assert(total >= 2),
+       assert(!(playOnce && repeat), 'Chọn playOnce hoặc repeat, không cả hai');
 
   final int completed;
   final int total;
+
+  /// true = cá leo từ chân thác qua cổng đúng 1 lần (bỏ qua [completed]).
+  final bool playOnce;
+
+  /// true = cá leo qua cổng lặp đi lặp lại (bỏ qua [completed]). Khi người
+  /// dùng tắt hiệu ứng, cá đứng yên trên cổng.
+  final bool repeat;
+
+  /// Thời gian cá leo hết thác khi [playOnce] hoặc [repeat].
+  final Duration duration;
   final Color primary;
 
   /// Màu nền sidebar (dùng cho bảng tên cổng và chấm rỗng).
   final Color background;
   final bool showCaption;
 
-  /// Gọi một lần khi cá vượt cổng (completed chạm total).
+  /// Gọi khi cá vượt cổng: một lần khi completed chạm total hoặc hết lượt
+  /// [playOnce]; mỗi vòng khi [repeat].
   final VoidCallback? onPassedGate;
 
   @override
@@ -58,6 +82,19 @@ class _VuMonProgressState extends State<VuMonProgress>
   late final AnimationController _celebrate;
   late final Ticker _clockTicker;
   final ValueNotifier<double> _clock = ValueNotifier<double>(0);
+  bool _played = false;
+  bool? _reduceMotion;
+
+  // Một vòng khi [VuMonProgress.repeat]: leo (duration) → lóe sáng → nghỉ →
+  // mờ đi. Cá hiện lại dần ở chân thác trong lúc bắt đầu leo vòng sau.
+  static const _flash = Duration(milliseconds: 1600);
+  static const _hold = Duration(milliseconds: 1200);
+  static const _fade = Duration(milliseconds: 400);
+  late final AnimationController _cycle;
+  CurvedAnimation? _loopLevel;
+  CurvedAnimation? _loopCelebrate;
+  Animation<double> _loopFish = kAlwaysCompleteAnimation;
+  double _climbEnd = 1, _flashEnd = 1, _lastCycle = 0;
 
   double get _target => (widget.completed / widget.total).clamp(0.0, 1.0);
 
@@ -67,12 +104,13 @@ class _VuMonProgressState extends State<VuMonProgress>
     _level = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-      value: _target,
+      value: widget.playOnce ? 0 : _target,
     );
     _celebrate = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     );
+    _cycle = AnimationController(vsync: this)..addListener(_onCycleTick);
     _clockTicker = createTicker((e) => _clock.value = e.inMicroseconds / 1e6);
   }
 
@@ -85,13 +123,108 @@ class _VuMonProgressState extends State<VuMonProgress>
     } else if (!reduce && !_clockTicker.isActive) {
       _clockTicker.start();
     }
+    // Chạy ở đây (không phải initState) để biết người dùng có tắt hiệu ứng.
+    if (widget.playOnce && !_played) {
+      _played = true;
+      _playOnce(reduce);
+    }
+    if (_reduceMotion != reduce) {
+      _reduceMotion = reduce;
+      _syncLoop();
+    }
+  }
+
+  /// Bật / tắt vòng lặp theo [VuMonProgress.repeat] và cài đặt hiện tại.
+  void _syncLoop() {
+    if (!widget.repeat) {
+      _cycle.stop();
+      return;
+    }
+    final climb = widget.duration.inMilliseconds;
+    final total =
+        climb +
+        _flash.inMilliseconds +
+        _hold.inMilliseconds +
+        _fade.inMilliseconds;
+    _climbEnd = climb / total;
+    _flashEnd = (climb + _flash.inMilliseconds) / total;
+    final fade = _fade.inMilliseconds / total;
+    _cycle.duration = Duration(milliseconds: total);
+    _loopLevel?.dispose();
+    _loopCelebrate?.dispose();
+    _loopLevel = CurvedAnimation(
+      parent: _cycle,
+      curve: Interval(0, _climbEnd, curve: Curves.easeInOut),
+    );
+    _loopCelebrate = CurvedAnimation(
+      parent: _cycle,
+      curve: Interval(_climbEnd, _flashEnd),
+    );
+    _loopFish = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: fade),
+      TweenSequenceItem(tween: ConstantTween(1), weight: 1 - 2 * fade),
+      TweenSequenceItem(tween: Tween(begin: 1, end: 0), weight: fade),
+    ]).animate(_cycle);
+    if (_reduceMotion ?? false) {
+      // Đứng yên ngay sau lúc vượt cổng: cá ở trên, hiện rõ, không lóe sáng.
+      _cycle.stop();
+      _cycle.value = _flashEnd;
+    } else {
+      _lastCycle = _cycle.value;
+      _cycle.repeat();
+    }
+  }
+
+  void _onCycleTick() {
+    final t = _cycle.value;
+    if (_cycle.isAnimating && _lastCycle < _climbEnd && t >= _climbEnd) {
+      widget.onPassedGate?.call();
+    }
+    _lastCycle = t;
+  }
+
+  void _playOnce(bool reduce) {
+    _level
+        .animateTo(
+          1,
+          duration: reduce ? Duration.zero : widget.duration,
+          curve: Curves.easeInOut,
+        )
+        .then((_) {
+          if (!mounted) return;
+          if (!reduce) _celebrate.forward(from: 0);
+          widget.onPassedGate?.call();
+        });
   }
 
   @override
   void didUpdateWidget(covariant VuMonProgress old) {
     super.didUpdateWidget(old);
-    if (old.completed != widget.completed || old.total != widget.total) {
-      final wasDone = old.completed >= old.total;
+    if (old.repeat != widget.repeat ||
+        (widget.repeat && old.duration != widget.duration)) {
+      _syncLoop();
+    }
+    if (old.playOnce && !widget.playOnce) {
+      // Bỏ lượt leo đang dở: dừng kiểu canceled nên .then của nó không chạy,
+      // không lóe sáng hay gọi onPassedGate muộn.
+      _level.stop();
+      _celebrate.reset();
+      _played = false;
+    }
+    // Đổi sang playOnce lúc đang chạy (ví dụ hot reload).
+    if (widget.playOnce && !_played) {
+      _played = true;
+      _playOnce(_reduceMotion ?? false);
+    }
+    // Rời playOnce / repeat để hiện dữ liệu thật: cá phải về đúng số chặng
+    // dù completed không đổi trong lần cập nhật này.
+    final leftDemo = old.playOnce || old.repeat;
+    if (!widget.playOnce &&
+        !widget.repeat &&
+        (leftDemo ||
+            old.completed != widget.completed ||
+            old.total != widget.total)) {
+      final wasDone = !leftDemo && old.completed >= old.total;
       _level.animateTo(_target, curve: Curves.easeInOutCubic).then((_) {
         if (!mounted) return;
         if (!wasDone && widget.completed >= widget.total) {
@@ -106,6 +239,9 @@ class _VuMonProgressState extends State<VuMonProgress>
   void dispose() {
     _level.dispose();
     _celebrate.dispose();
+    _loopLevel?.dispose();
+    _loopCelebrate?.dispose();
+    _cycle.dispose();
     _clockTicker.dispose();
     _clock.dispose();
     super.dispose();
@@ -114,20 +250,25 @@ class _VuMonProgressState extends State<VuMonProgress>
   @override
   Widget build(BuildContext context) {
     final left = widget.total - widget.completed;
+    final loop = widget.repeat;
+    // Chưa có dữ liệu thật thì không hiện số chặng.
+    final demo = widget.playOnce || loop;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Semantics(
-          label:
-              'Thác Vũ Môn: đã vượt ${widget.completed} trên ${widget.total} chặng tuần này',
+          label: demo
+              ? 'Thác Vũ Môn'
+              : 'Thác Vũ Môn: đã vượt ${widget.completed} trên ${widget.total} chặng tuần này',
           child: AspectRatio(
             aspectRatio: 208 / 236,
             child: RepaintBoundary(
               child: CustomPaint(
                 painter: _VuMonPainter(
-                  level: _level,
-                  celebrate: _celebrate,
+                  level: loop ? _loopLevel! : _level,
+                  celebrate: loop ? _loopCelebrate! : _celebrate,
+                  fish: loop ? _loopFish : kAlwaysCompleteAnimation,
                   clock: _clock,
                   total: widget.total,
                   primary: widget.primary,
@@ -142,7 +283,9 @@ class _VuMonProgressState extends State<VuMonProgress>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              'Tuần này: ${widget.completed}/${widget.total} chặng',
+              demo
+                  ? 'Thác Vũ Môn'
+                  : 'Tuần này: ${widget.completed}/${widget.total} chặng',
               style: TextStyle(
                 color: widget.primary,
                 fontSize: 13,
@@ -154,7 +297,9 @@ class _VuMonProgressState extends State<VuMonProgress>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              left > 0
+              demo
+                  ? 'Học đều mỗi ngày để cá vượt vũ môn'
+                  : left > 0
                   ? 'Còn $left bài nữa để vượt vũ môn'
                   : 'Đã vượt vũ môn tuần này!',
               style: const TextStyle(
@@ -174,14 +319,18 @@ class _VuMonPainter extends CustomPainter {
   _VuMonPainter({
     required this.level,
     required this.celebrate,
+    required this.fish,
     required this.clock,
     required this.total,
     required this.primary,
     required this.background,
-  }) : super(repaint: Listenable.merge([level, celebrate, clock]));
+  }) : super(repaint: Listenable.merge([level, celebrate, fish, clock]));
 
   final Animation<double> level;
   final Animation<double> celebrate;
+
+  /// Độ hiện của cá 0..1 (chỉ đổi khi lặp: mờ đi ở cổng, hiện lại ở chân thác).
+  final Animation<double> fish;
   final ValueListenable<double> clock;
   final int total;
   final Color primary;
@@ -375,27 +524,40 @@ class _VuMonPainter extends CustomPainter {
     }
 
     // Cá chép
-    final bob = Offset(
-      math.sin(c * 2 * math.pi / 3.2) * 2,
-      math.cos(c * 2 * math.pi / 3.2) * 3,
-    );
-    canvas.save();
-    canvas.translate(104 + bob.dx, _koiY(v) + bob.dy);
-    canvas.rotate(-math.pi / 2);
-    canvas.scale(0.46);
-    paintKoi(
-      canvas,
-      spot: primary,
-      fins: false,
-      tailAngle: math.sin(c * 2 * math.pi / 0.9) * 22 * math.pi / 180,
-    );
-    canvas.restore();
+    final opacity = fish.value.clamp(0.0, 1.0);
+    if (opacity > 0) {
+      final bob = Offset(
+        math.sin(c * 2 * math.pi / 3.2) * 2,
+        math.cos(c * 2 * math.pi / 3.2) * 3,
+      );
+      canvas.save();
+      canvas.translate(104 + bob.dx, _koiY(v) + bob.dy);
+      canvas.rotate(-math.pi / 2);
+      canvas.scale(0.46);
+      if (opacity < 1) {
+        canvas.saveLayer(
+          null,
+          Paint()..color = Color.fromRGBO(0, 0, 0, opacity),
+        );
+      }
+      paintKoi(
+        canvas,
+        spot: primary,
+        fins: false,
+        tailAngle: math.sin(c * 2 * math.pi / 0.9) * 22 * math.pi / 180,
+      );
+      if (opacity < 1) canvas.restore();
+      canvas.restore();
+    }
 
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _VuMonPainter old) =>
+      old.level != level ||
+      old.celebrate != celebrate ||
+      old.fish != fish ||
       old.total != total ||
       old.primary != primary ||
       old.background != background;
