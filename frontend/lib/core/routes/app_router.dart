@@ -7,6 +7,8 @@ import '../../features/documents/presentation/views/weekly_documents_page.dart';
 import '../../features/weekly_docs/presentation/views/weeks_screen.dart';
 import '../../features/weekly_docs/presentation/views/doc_reader_screen.dart';
 import '../../features/weekly_docs/presentation/views/doc_complete_screen.dart';
+import '../../features/weekly_docs/presentation/views/admin/admin_week_docs_screen.dart';
+import '../../features/weekly_docs/presentation/views/admin/doc_creator_screen.dart';
 import '../../features/documents/presentation/views/document_detail_page.dart';
 import '../../features/documents/presentation/views/lesson_detail_page.dart';
 import '../../features/vocabulary/presentation/views/vocabulary_list_page.dart';
@@ -153,6 +155,21 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/admin/access-keys',
           builder: (context, state) => const AdminAccessKeysPage(),
+        ),
+        GoRoute(
+          path: '/admin/weekly-docs',
+          builder: (context, state) => const AdminWeekDocsScreen(),
+        ),
+        GoRoute(
+          path: '/admin/weekly-docs/create',
+          builder: (context, state) => const DocCreatorScreen(),
+        ),
+        GoRoute(
+          path: '/admin/weekly-docs/:id/edit',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return DocCreatorScreen(docId: id);
+          },
         ),
       ],
     ),

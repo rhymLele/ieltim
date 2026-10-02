@@ -15,25 +15,55 @@ class WeekProgress {
   const WeekProgress({required this.week, required this.completed, required this.total});
 }
 
+/// Bộ lọc danh sách admin.
+class AdminDocFilter {
+  final int? week;
+  final DocStatus? status;
+  final String? skill;
+  final String? search;
+  const AdminDocFilter({this.week, this.status, this.skill, this.search});
+}
+
 abstract class WeeklyDocsRepository {
-  /// Lấy danh sách các tuần có tài liệu đã publish.
+  // ─── User ──────────────────────────────────────────────────────────────────
+
   Future<List<int>> getWeeks();
-
-  /// Lấy tất cả tài liệu đã publish của một tuần, sắp theo [DocMeta.order].
   Future<List<WeeklyDoc>> getDocsForWeek(int week);
-
-  /// Lấy một tài liệu theo id.
   Future<WeeklyDoc?> getDocById(String id);
-
-  /// Đánh dấu tài liệu đã học xong.
   Future<void> markCompleted(String docId);
-
-  /// Bỏ đánh dấu đã học xong.
   Future<void> markIncomplete(String docId);
-
-  /// Kiểm tra tài liệu có đã học xong chưa.
   Future<bool> isCompleted(String docId);
-
-  /// Tiến độ tuần (số tài liệu đã xong / tổng).
   Future<WeekProgress> getWeekProgress(int week);
+
+  // ─── Admin ─────────────────────────────────────────────────────────────────
+
+  /// Danh sách tài liệu (mọi trạng thái) cho admin, có lọc.
+  Future<List<WeeklyDoc>> getAdminDocs({AdminDocFilter? filter});
+
+  /// Tất cả tuần (kể cả tuần chưa có tài liệu đã publish).
+  Future<List<int>> getAllWeeks();
+
+  /// Tạo tài liệu mới (DRAFT).
+  Future<WeeklyDoc> createDoc(WeeklyDoc doc);
+
+  /// Cập nhật tài liệu (giữ version tăng).
+  Future<WeeklyDoc> updateDoc(WeeklyDoc doc);
+
+  /// Xoá tài liệu (chỉ DRAFT chưa từng publish).
+  Future<void> deleteDoc(String docId);
+
+  /// Xuất bản (DRAFT → PUBLISHED).
+  Future<WeeklyDoc> publishDoc(String docId);
+
+  /// Gỡ (PUBLISHED → ARCHIVED).
+  Future<WeeklyDoc> unpublishDoc(String docId);
+
+  /// Khôi phục (ARCHIVED → DRAFT).
+  Future<WeeklyDoc> restoreDoc(String docId);
+
+  /// Nhân bản sang tuần khác. Trả về doc mới.
+  Future<WeeklyDoc> duplicateDoc(String docId, {int? targetWeek});
+
+  /// Export JSON string.
+  String exportJson(WeeklyDoc doc);
 }

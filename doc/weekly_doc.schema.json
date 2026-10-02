@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ieltshub.app/schemas/weekly_doc.v1.json",
+  "title": "IELTS Hub weekly document (schemaVersion 1)",
+  "type": "object",
+  "required": ["schemaVersion", "title", "sections"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^w[0-9]+-doc[0-9]+$" },
+    "week": { "type": "integer", "minimum": 1 },
+    "order": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "template": { "enum": ["reading-lesson", "writing-task2", "vocab-set", "speaking-part2", "blank", "custom"] },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "skill": { "enum": ["reading", "listening", "writing", "speaking", "vocabulary"] },
+        "defaultView": { "enum": ["slide", "doc"] },
+        "allowedViews": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "enum": ["slide", "doc"] }
+        }
+      },
+      "additionalProperties": true
+    },
+    "sections": {
+      "type": "array", "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "section": {
+      "type": "object",
+      "required": ["title", "blocks"],
+      "properties": {
+        "title": { "$ref": "#/$defs/text" },
+        "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } }
+      }
+    },
+    "blockBase": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string" },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "block": {
+      "allOf": [{ "$ref": "#/$defs/blockBase" }],
+      "oneOf": [
+        { "properties": { "type": { "const": "heading" }, "text": { "$ref": "#/$defs/text" } }, "required": ["text"] },
+        { "properties": { "type": { "const": "paragraph" }, "text": { "$ref": "#/$defs/text" } }, "required": ["text"] },
+        { "properties": { "type": { "const": "callout" }, "text": { "$ref": "#/$defs/text" }, "tone": { "enum": ["tip", "warning", "note"] } }, "required": ["text"] },
+        { "properties": { "type": { "const": "steps" }, "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } } }, "required": ["items"] },
+        { "properties": { "type": { "const": "passage" }, "text": { "$ref": "#/$defs/text" }, "label": { "type": "string" } }, "required": ["text"] },
+        {
+          "properties": {
+            "type": { "const": "quiz" },
+            "question": { "$ref": "#/$defs/text" },
+            "options": { "type": "array", "minItems": 2, "maxItems": 6, "items": { "$ref": "#/$defs/text" } },
+            "answer": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "explain": { "type": "string" }
+          },
+          "required": ["question", "options", "answer"]
+        },
+        {
+          "properties": {
+            "type": { "const": "vocab" },
+            "items": {
+              "type": "array", "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["word", "meaning"],
+                "properties": {
+                  "word": { "$ref": "#/$defs/text" },
+                  "meaning": { "$ref": "#/$defs/text" },
+                  "pos": { "type": "string" },
+                  "ipa": { "type": "string" },
+                  "example": { "type": "string" }
+                }
+              }
+            }
+          },
+          "required": ["items"]
+        },
+        { "properties": { "type": { "const": "pattern" }, "structure": { "$ref": "#/$defs/text" }, "example": { "type": "string" } }, "required": ["structure"] },
+        { "properties": { "type": { "const": "image" }, "url": { "type": "string", "pattern": "^https://" }, "caption": { "type": "string" }, "alt": { "type": "string" } }, "required": ["url"] },
+        { "properties": { "type": { "const": "slideBreak" } } }
+      ]
+    }
+  }
+}

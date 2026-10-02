@@ -21,6 +21,7 @@ import 'package:frontend/features/admin/vocabularies/presentation/views/admin_vo
 import 'package:frontend/features/admin/sentence_patterns/presentation/views/admin_sentence_patterns_page.dart';
 import 'package:frontend/features/admin/tags/presentation/views/admin_tags_page.dart';
 import 'package:frontend/features/admin/access_keys/presentation/views/admin_access_keys_page.dart';
+import 'package:frontend/features/weekly_docs/presentation/views/admin/admin_week_docs_screen.dart';
 
 class TabPage {
   final String label;
@@ -113,6 +114,13 @@ List<TabPage> get allTabs => [
     builder: (_) => const AdminAccessKeysPage(),
     adminOnly: true,
     route: '/admin/access-keys',
+  ),
+  TabPage(
+    label: 'Tài liệu tuần',
+    icon: Icons.menu_book,
+    builder: (_) => const AdminWeekDocsScreen(),
+    adminOnly: true,
+    route: '/admin/weekly-docs',
   ),
 ];
 
