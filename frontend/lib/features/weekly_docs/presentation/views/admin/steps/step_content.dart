@@ -247,7 +247,7 @@ class _SectionEditorState extends State<_SectionEditor> {
     );
   }
 
-  static const _blockTypes = [
+  static const _blockTypes = <(String, String)>[
     ('heading', 'Heading'),
     ('paragraph', 'Paragraph'),
     ('callout', 'Callout'),
