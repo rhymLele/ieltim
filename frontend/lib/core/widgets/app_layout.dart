@@ -8,6 +8,7 @@ import 'package:frontend/core/widgets/vu_mon_progress.dart';
 import 'package:frontend/features/home/presentation/views/home_page.dart';
 import 'package:frontend/features/documents/presentation/bloc/weekly_documents_bloc.dart';
 import 'package:frontend/features/documents/presentation/views/weekly_documents_page.dart';
+import 'package:frontend/features/weekly_docs/presentation/views/weeks_screen.dart';
 import 'package:frontend/features/search/presentation/bloc/search_bloc.dart';
 import 'package:frontend/features/search/presentation/views/search_page.dart';
 import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
@@ -56,10 +57,7 @@ List<TabPage> get allTabs => [
   TabPage(
     label: 'Theo tuần',
     icon: Icons.calendar_month,
-    builder: (_) => BlocProvider(
-      create: (_) => WeeklyDocumentsBloc()..add(LoadDocuments(week: 1)),
-      child: const WeeklyDocumentsPage(),
-    ),
+    builder: (_) => const WeeksScreen(),
     route: '/weekly',
   ),
   TabPage(

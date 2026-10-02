@@ -1,0 +1,213 @@
+[
+  {
+    "id": "doc-week1-day1",
+    "meta": {
+      "title": "Listening: Practice Test 1",
+      "week": 1,
+      "order": 1,
+      "skills": ["Listening"],
+      "estimatedMinutes": 15,
+      "status": "published",
+      "defaultView": "slide",
+      "allowedViews": ["slide", "doc"],
+      "allowUserSwitchView": true
+    },
+    "sections": [
+      {
+        "number": 1,
+        "title": "Warm-up",
+        "blocks": [
+          { "type": "heading", "text": "Section 1: Personal Information" },
+          {
+            "type": "paragraph",
+            "text": "You will hear a conversation between a student and a university accommodation officer. Answer questions 1-4 as you listen."
+          },
+          {
+            "type": "callout",
+            "text": "**Tip:** Focus on the speaker's intonation. The answer is often rephrased, not repeated word-for-word."
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "title": "Listening Practice",
+        "blocks": [
+          {
+            "type": "passage",
+            "label": "Recording Script (for review)",
+            "text": "Officer: Good morning, is that Minh Duc Le?\nStudent: Yes, that's me. I'm calling about the student accommodation.\nOfficer: Great. So you'd like to book a single room, correct?\nStudent: Actually, I was wondering if a shared room would be available. It's a bit more affordable."
+          },
+          {
+            "type": "quiz",
+            "question": "Why does the student want a shared room?",
+            "options": [
+              "It is closer to the lecture hall",
+              "It is cheaper",
+              "It has more space",
+              "It is quieter"
+            ],
+            "correctIndex": 1,
+            "explanation": "The student says it's 'a bit more affordable', which means it costs less."
+          },
+          { "type": "slideBreak" }
+        ]
+      },
+      {
+        "number": 3,
+        "title": "Vocabulary Review",
+        "blocks": [
+          {
+            "type": "vocab",
+            "items": [
+              { "word": "affordable", "partOfSpeech": "adj", "ipa": "/əˈfɔːdəbl/", "meaning": "có giá vừa túi tiền" },
+              { "word": "accommodation", "partOfSpeech": "n", "ipa": "/əˌkɒməˈdeɪʃn/", "meaning": "nơi ở, chỗ ở" },
+              { "word": "rephrased", "partOfSpeech": "v (past)", "ipa": "/ˌriːˈfreɪzd/", "meaning": "diễn đạt lại" }
+            ]
+          },
+          {
+            "type": "steps",
+            "items": [
+              "1. Listen first pass — Nghe toàn bộ bài, ghi chú từ khóa",
+              "2. Check answers — So sánh với script, đánh dấu câu bạn sai",
+              "3. Review vocab — Học lại từ vựng mới trong bài"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "doc-week1-day2",
+    "meta": {
+      "title": "Reading: Academic Passage",
+      "week": 1,
+      "order": 2,
+      "skills": ["Reading"],
+      "estimatedMinutes": 20,
+      "status": "published",
+      "defaultView": "doc",
+      "allowedViews": ["slide", "doc"],
+      "allowUserSwitchView": true
+    },
+    "sections": [
+      {
+        "number": 1,
+        "title": "Introduction",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Today we'll practice an **Academic Reading** passage about the history of paper making. This type of passage commonly appears in IELTS Reading Part 3."
+          },
+          {
+            "type": "callout",
+            "text": "**Strategy:** Read the questions first, then scan for keywords in the passage. Don't read word-by-word."
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "title": "Passage",
+        "blocks": [
+          {
+            "type": "passage",
+            "label": "The Invention of Paper",
+            "text": "Paper is one of humanity's most important inventions, transforming how knowledge is recorded and shared. While many cultures developed writing surfaces from plant materials, true paper — a uniform sheet made from processed fibres — is credited to Cai Lun, a Chinese court official, around 105 AD.\n\nBefore paper, the Chinese wrote on bamboo slips or silk. Bamboo was cheap but heavy; a single book could weigh over a hundred kilograms. Silk was light but prohibitively expensive, reserved for the elite.\n\nCai Lun's innovation was to combine scrap materials — rags, bark, hemp, and old fishing nets — into a slurry that could be pressed into thin sheets. The process was cheap, scalable, and produced a consistent surface ideal for writing.\n\nThe technology spread westward along the Silk Road, reaching the Islamic world by the 8th century and Europe by the 12th, fundamentally altering the trajectory of civilisation."
+          },
+          { "type": "slideBreak" }
+        ]
+      },
+      {
+        "number": 3,
+        "title": "Questions",
+        "blocks": [
+          {
+            "type": "quiz",
+            "question": "Why was silk unsuitable as a common writing material?",
+            "options": [
+              "It was too heavy to carry",
+              "It was made from animal products",
+              "It was extremely expensive",
+              "It could not hold ink well"
+            ],
+            "correctIndex": 2,
+            "explanation": "The passage states silk was 'prohibitively expensive, reserved for the elite.'"
+          },
+          {
+            "type": "quiz",
+            "question": "What materials did Cai Lun use to make paper?",
+            "options": [
+              "Bamboo and silk",
+              "Rags, bark, hemp, and fishing nets",
+              "Cotton and wood pulp",
+              "Leaves and clay"
+            ],
+            "correctIndex": 1,
+            "explanation": "Paragraph 3 lists: 'rags, bark, hemp, and old fishing nets.'"
+          },
+          {
+            "type": "vocab",
+            "items": [
+              { "word": "slurry", "partOfSpeech": "n", "ipa": "/ˈslʌri/", "meaning": "hỗn hợp sệt, bột nhão" },
+              { "word": "scalable", "partOfSpeech": "adj", "ipa": "/ˈskeɪləbl/", "meaning": "có thể mở rộng quy mô" },
+              { "word": "prohibitively", "partOfSpeech": "adv", "ipa": "/prəˈhɪbɪtɪvli/", "meaning": "ở mức ngăn cản (do quá đắt/khó)" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "doc-week1-day3",
+    "meta": {
+      "title": "Speaking: Part 2 Cue Card",
+      "week": 1,
+      "order": 3,
+      "skills": ["Speaking"],
+      "estimatedMinutes": 10,
+      "status": "published",
+      "defaultView": "doc",
+      "allowedViews": ["doc"],
+      "allowUserSwitchView": false
+    },
+    "sections": [
+      {
+        "number": 1,
+        "title": "Cue Card",
+        "blocks": [
+          {
+            "type": "callout",
+            "text": "You have **1 minute** to prepare and **2 minutes** to speak. Use the notes to structure your answer but don't read them word-for-word."
+          },
+          {
+            "type": "passage",
+            "label": "Describe a book you have read recently.",
+            "text": "You should say:\n- What the book was about\n- When and where you read it\n- How you found out about it\n- And explain why you enjoyed / didn't enjoy it"
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "title": "Useful Structures",
+        "blocks": [
+          {
+            "type": "steps",
+            "items": [
+              "Opening — \"I'd like to talk about a novel I picked up last month…\"",
+              "Context — \"I was actually recommended it by my colleague…\"",
+              "Detail — \"What struck me most was the way the author described…\"",
+              "Closing — \"Overall, it was a thought-provoking read that I'd definitely recommend…\""
+            ]
+          },
+          {
+            "type": "vocab",
+            "items": [
+              { "word": "thought-provoking", "partOfSpeech": "adj", "ipa": "/θɔːt ˈprɒvɪŋ/", "meaning": "gợi suy nghĩ sâu" },
+              { "word": "struck me", "partOfSpeech": "v (past)", "ipa": "/strʌk miː/", "meaning": "gây ấn tượng mạnh với tôi" },
+              { "word": "recommend", "partOfSpeech": "v", "ipa": "/ˌrekəˈmend/", "meaning": "giới thiệu, khuyên đọc" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

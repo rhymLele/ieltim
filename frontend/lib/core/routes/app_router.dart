@@ -4,6 +4,9 @@ import '../storage/token_storage.dart';
 import '../../features/auth/presentation/views/access_key_page.dart';
 import '../../features/home/presentation/views/home_page.dart';
 import '../../features/documents/presentation/views/weekly_documents_page.dart';
+import '../../features/weekly_docs/presentation/views/weeks_screen.dart';
+import '../../features/weekly_docs/presentation/views/doc_reader_screen.dart';
+import '../../features/weekly_docs/presentation/views/doc_complete_screen.dart';
 import '../../features/documents/presentation/views/document_detail_page.dart';
 import '../../features/documents/presentation/views/lesson_detail_page.dart';
 import '../../features/vocabulary/presentation/views/vocabulary_list_page.dart';
@@ -55,7 +58,22 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: '/weekly',
-          builder: (context, state) => const WeeklyDocumentsPage(),
+          builder: (context, state) => const WeeksScreen(),
+        ),
+        GoRoute(
+          path: '/weekly/doc/:id',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return DocReaderScreen(docId: id);
+          },
+        ),
+        GoRoute(
+          path: '/weekly/complete',
+          builder: (context, state) {
+            final docId = state.uri.queryParameters['docId'] ?? '';
+            final week = int.tryParse(state.uri.queryParameters['week'] ?? '1') ?? 1;
+            return DocCompleteScreen(docId: docId, week: week);
+          },
         ),
         GoRoute(
           path: '/lessons/:id',
