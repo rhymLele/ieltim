@@ -33,10 +33,8 @@ async function bootstrap() {
     );
     console.log(`Serving Flutter web from ${distPath}`);
   } else {
-    // Thiếu bản build web (vd Render chưa chạy scripts/render-build.sh): chỉ có API, mọi trang web trả 404.
-    console.warn(
-      'Flutter web build not found (frontend/build/web): serving API only',
-    );
+    // Web deploy riêng (Render Static Site) hoặc chưa build: service này chỉ phục vụ API.
+    console.log('No Flutter web build (frontend/build/web): serving API only');
   }
 
   const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
