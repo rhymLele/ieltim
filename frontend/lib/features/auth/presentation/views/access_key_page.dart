@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:frontend/core/routes/redirect_path.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/widgets/dragon_loader.dart';
 import 'package:frontend/features/auth/presentation/bloc/auth_bloc.dart';
@@ -47,7 +48,8 @@ class _AccessKeyPageState extends State<AccessKeyPage> {
     if (mounted &&
         _dragonDone &&
         context.read<AuthBloc>().state is AuthSuccess) {
-      context.go('/home');
+      // Mở từ link cụ thể (vd. /weekly/doc/w12-doc1) thì quay lại trang đó.
+      context.go(safeRedirectPath(GoRouterState.of(context).uri.queryParameters['from']) ?? '/home');
     }
   }
 

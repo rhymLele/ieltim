@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import '../storage/token_storage.dart';
+import 'redirect_path.dart';
 import '../../features/auth/presentation/views/access_key_page.dart';
 import '../../features/home/presentation/views/home_page.dart';
 import '../../features/documents/presentation/views/weekly_documents_page.dart';
@@ -32,10 +33,11 @@ final GoRouter appRouter = GoRouter(
     final isGoingToAccess = state.matchedLocation == '/access';
 
     if (!isLoggedIn && !isGoingToAccess) {
-      return '/access';
+      // Giữ trang đang mở để đăng nhập xong quay lại đúng chỗ.
+      return accessPathFor(state.uri.toString());
     }
     if (isLoggedIn && isGoingToAccess) {
-      return '/home';
+      return safeRedirectPath(state.uri.queryParameters['from']) ?? '/home';
     }
     return null;
   },
