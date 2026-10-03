@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { addDays, isMonday, vnDate } from './domain/vn-time';
+import { weeksToGenerate } from './domain/week-plan';
 import { CreateWeekDto, UpdateWeekDto } from './dto/week.dto';
 import { Week } from './entities/week.entity';
 import { WeeklyDocument } from './entities/weekly-document.entity';
 import { DocStatus } from './enums/weekly-docs.enums';
-import { DEFAULT_STAGE_GOAL } from './weekly-docs.constants';
+import {
+  DEFAULT_STAGE_GOAL,
+  DEFAULT_WEEKS_AHEAD,
+} from './weekly-docs.constants';
 import { weeklyError } from './weekly-errors';
 
 export type WeekState = 'locked' | 'open';
@@ -17,7 +22,39 @@ export class WeeksService {
   constructor(
     @InjectRepository(Week) private weeks: Repository<Week>,
     @InjectRepository(WeeklyDocument) private docs: Repository<WeeklyDocument>,
+    private config: ConfigService,
   ) {}
+
+  /** Số tuần tới luôn có sẵn để admin soạn trước (WEEKLY_WEEKS_AHEAD, mặc định 4). */
+  weeksAhead(): number {
+    const n = Number(
+      this.config.get('WEEKLY_WEEKS_AHEAD') ?? DEFAULT_WEEKS_AHEAD,
+    );
+    return Number.isInteger(n) && n >= 0
+      ? Math.min(n, 52)
+      : DEFAULT_WEEKS_AHEAD;
+  }
+
+  /**
+   * Tự sinh tuần: nối tiếp tuần cuối tới hết tuần này + `weeksAhead()` tuần. Gọi lúc liệt kê tuần,
+   * lúc tạo tài liệu và trong job mỗi giờ. Chạy song song an toàn (bỏ qua số tuần đã có).
+   */
+  async ensureUpcoming(now = new Date()): Promise<number[]> {
+    const [last] = await this.weeks.find({
+      order: { number: 'DESC' },
+      take: 1,
+    });
+    const slots = weeksToGenerate(last ?? null, this.weeksAhead(), now);
+    if (!slots.length) return [];
+    await this.weeks
+      .createQueryBuilder()
+      .insert()
+      .into(Week)
+      .values(slots.map((s) => ({ ...s, stageGoal: DEFAULT_STAGE_GOAL })))
+      .orIgnore()
+      .execute();
+    return slots.map((s) => s.number);
+  }
 
   /** `locked` khi chưa tới ngày bắt đầu (giờ Việt Nam), `open` từ ngày đó trở đi. */
   static stateOf(week: Pick<Week, 'startDate'>, today = vnDate()): WeekState {
@@ -26,13 +63,18 @@ export class WeeksService {
 
   async findOrFail(number: number): Promise<Week> {
     const week = await this.weeks.findOne({ where: { number } });
-    if (!week)
-      throw weeklyError(
-        404,
-        'WEEK_NOT_FOUND',
-        `Chưa có Tuần ${number}. Tạo tuần trước.`,
-      );
-    return week;
+    if (week) return week;
+    const [last] = await this.weeks.find({
+      order: { number: 'DESC' },
+      take: 1,
+    });
+    throw weeklyError(
+      404,
+      'WEEK_NOT_FOUND',
+      last
+        ? `Chưa có Tuần ${number}. Hệ thống tự tạo sẵn các tuần tới, hiện có tới Tuần ${last.number}.`
+        : `Chưa có Tuần ${number}.`,
+    );
   }
 
   /** Tuần chứa ngày hôm nay (giờ Việt Nam), null nếu chưa tạo. */
@@ -50,6 +92,7 @@ export class WeeksService {
   // ───────────────────────────── Admin ─────────────────────────────
 
   async adminList() {
+    await this.ensureUpcoming();
     const today = vnDate();
     const weeks = await this.weeks.find({ order: { number: 'ASC' } });
     const counts: { week: number; status: DocStatus; n: string }[] =

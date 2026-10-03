@@ -75,9 +75,17 @@ class _WeeksScreenState extends State<WeeksScreen> {
 
   void _onRepo() => setState(() {});
 
+  /// Tuần đã mở + tuần sắp mở gần nhất. BE tự sinh sẵn vài tuần tới cho admin soạn trước;
+  /// người học chỉ cần thấy tuần kế tiếp.
+  List<WeekInfo> get _visibleWeeks {
+    final weeks = widget.repo.weeks;
+    final firstLocked = weeks.indexWhere((w) => w.isLocked);
+    return [for (var i = 0; i < weeks.length; i++) if (!weeks[i].isLocked || i == firstLocked) weeks[i]];
+  }
+
   void _scrollToCurrent() {
     if (!_chipsController.hasClients) return;
-    final i = widget.repo.weeks.indexWhere((w) => w.number == _week);
+    final i = _visibleWeeks.indexWhere((w) => w.number == _week);
     _chipsController.jumpTo((i * 92.0 - 16).clamp(0.0, _chipsController.position.maxScrollExtent));
   }
 
@@ -155,7 +163,7 @@ class _WeeksScreenState extends State<WeeksScreen> {
   }
 
   Widget _weekChips(bool desktop) {
-    final weeks = widget.repo.weeks;
+    final weeks = _visibleWeeks;
     return SizedBox(
       height: 56,
       child: ListView.separated(

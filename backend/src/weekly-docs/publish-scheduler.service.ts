@@ -5,12 +5,13 @@ import {
   OnApplicationShutdown,
 } from '@nestjs/common';
 import { AdminDocumentsService } from './admin-documents.service';
+import { WeeksService } from './weeks.service';
 
 const TICK_MS = 60 * 1000;
 const PURGE_EVERY_MS = 60 * 60 * 1000;
 
 /**
- * Job mỗi phút: SCHEDULED tới giờ → PUBLISHED (file 1 mục 4); mỗi giờ dọn nháp đã xoá mềm quá 30 ngày.
+ * Job mỗi phút: SCHEDULED tới giờ → PUBLISHED (file 1 mục 4); mỗi giờ tự sinh tuần tới và dọn nháp đã xoá mềm quá 30 ngày.
  * Idempotent (UPDATE … WHERE status = 'scheduled'), chạy nhiều instance cũng an toàn.
  * Tắt bằng WEEKLY_SCHEDULER=off; không chạy khi NODE_ENV=test (test gọi `tick()` trực tiếp).
  */
@@ -23,7 +24,10 @@ export class PublishSchedulerService
   private running = false;
   private lastPurge = 0;
 
-  constructor(private docs: AdminDocumentsService) {}
+  constructor(
+    private docs: AdminDocumentsService,
+    private weeks: WeeksService,
+  ) {}
 
   onApplicationBootstrap() {
     if (
@@ -52,6 +56,9 @@ export class PublishSchedulerService
         );
       if (now.getTime() - this.lastPurge >= PURGE_EVERY_MS) {
         this.lastPurge = now.getTime();
+        const created = await this.weeks.ensureUpcoming(now);
+        if (created.length)
+          this.logger.log(`Tự sinh tuần: ${created.join(', ')}`);
         const purged = await this.docs.purgeDeleted(now);
         if (purged)
           this.logger.log(`Đã xoá hẳn ${purged} nháp quá hạn khôi phục`);

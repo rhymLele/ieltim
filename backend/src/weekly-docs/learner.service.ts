@@ -46,6 +46,7 @@ export class LearnerService {
   // ───────────────────────────── Đọc ─────────────────────────────
 
   async weekList(userId: string) {
+    await this.weeks.ensureUpcoming();
     const today = vnDate();
     const weeks = await this.weekRepo.find({ order: { number: 'ASC' } });
     const totals = await this.docs

@@ -13,8 +13,11 @@ import { addDays, vnCalendarWeek } from '../src/weekly-docs/domain/vn-time';
 import { LearnerService } from '../src/weekly-docs/learner.service';
 import { PublishSchedulerService } from '../src/weekly-docs/publish-scheduler.service';
 import { WeeklySeedService } from '../src/weekly-docs/weekly-seed.service';
+import { WeeksService } from '../src/weekly-docs/weeks.service';
 
 jest.setTimeout(60_000);
+// Seed có sẵn tuần tới (13) nên với 1 tuần tới, việc tự sinh không thêm tuần nào ngoài các test riêng của nó.
+process.env.WEEKLY_WEEKS_AHEAD = '1';
 
 describe('Tài liệu theo tuần (e2e)', () => {
   let app: INestApplication;
@@ -130,6 +133,38 @@ describe('Tài liệu theo tuần (e2e)', () => {
         'WEEK_NOT_EMPTY',
       );
       await admin.del('/weeks/14').expect(200);
+    });
+
+    it('tự sinh tuần: nối tiếp tuần cuối, thứ Hai liên tiếp, gọi lại không tạo trùng', async () => {
+      const weeks = app.get(WeeksService);
+      const inTwoWeeks = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+      expect(await weeks.ensureUpcoming()).toEqual([]);
+      expect(await weeks.ensureUpcoming(inTwoWeeks)).toEqual([14, 15]);
+      expect(await weeks.ensureUpcoming(inTwoWeeks)).toEqual([]);
+      const res = await admin.get('/weeks').expect(200);
+      const w15 = res.body.data.data.find(
+        (w: { number: number }) => w.number === 15,
+      );
+      expect(w15).toMatchObject({
+        startDate: addDays(vnCalendarWeek().monday, 21),
+        state: 'locked',
+      });
+      // Tài liệu tạo được ngay cho tuần vừa sinh.
+      const doc = await admin
+        .post('/documents', {
+          week: 15,
+          title: 'Soạn trước 3 tuần',
+          template: 'blank',
+        })
+        .expect(201);
+      expect(doc.body.data.id).toBe('w15-doc1');
+      await admin.del('/documents/w15-doc1').expect(200);
+      const missing = await admin
+        .post('/documents', { week: 40, title: 'Quá xa', template: 'blank' })
+        .expect(404);
+      expect(missing.body.message).toBe(
+        'Chưa có Tuần 40. Hệ thống tự tạo sẵn các tuần tới, hiện có tới Tuần 15.',
+      );
     });
 
     it('người dùng: tuần khoá trả 403', async () => {

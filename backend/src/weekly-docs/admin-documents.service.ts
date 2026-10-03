@@ -241,6 +241,7 @@ export class AdminDocumentsService {
       (Number.isInteger(given?.week) ? (given!.week as number) : undefined);
     if (!week)
       throw weeklyError(400, 'WEEK_REQUIRED', 'Chọn tuần cho tài liệu.');
+    await this.weeks.ensureUpcoming();
     await this.weeks.findOrFail(week);
     const order =
       dto.order ??

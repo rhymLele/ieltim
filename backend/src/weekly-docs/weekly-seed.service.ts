@@ -13,7 +13,7 @@ import { WeeklyDocument } from './entities/weekly-document.entity';
 import { DocStatus } from './enums/weekly-docs.enums';
 
 /**
- * Seed (file 2 mục 5): Tuần 10–13 quanh tuần hiện tại (Tuần 12 = tuần này, 13 ở tương lai),
+ * Seed (file 2 mục 5): trên DB trống, Tuần 10–13 quanh tuần hiện tại (Tuần 12 = tuần này, 13 ở tương lai),
  * `w12-doc1` đã xuất bản (đủ 8 loại khối), `w12-doc2` nháp Writing Task 2. Chạy lại không tạo trùng.
  */
 @Injectable()
@@ -26,8 +26,10 @@ export class WeeklySeedService {
   async seed(now = new Date()) {
     const { monday } = vnCalendarWeek(now);
     const created: string[] = [];
-    for (const number of [10, 11, 12, 13]) {
-      if (await this.weeks.exists({ where: { number } })) continue;
+    // Chỉ dựng Tuần 10–13 trên DB trống: DB đã có tuần (tự sinh hoặc seed trước) thì giữ nguyên để không chồng ngày.
+    const weeksToSeed =
+      (await this.weeks.count()) === 0 ? [10, 11, 12, 13] : [];
+    for (const number of weeksToSeed) {
       const startDate = addDays(monday, (number - 12) * 7);
       await this.weeks.insert({
         number,
@@ -52,7 +54,9 @@ export class WeeklySeedService {
         status: DocStatus.DRAFT,
       },
     ];
-    for (const s of samples) {
+    // Tài liệu mẫu chỉ tạo khi có Tuần 12.
+    const hasWeek12 = await this.weeks.exists({ where: { number: 12 } });
+    for (const s of hasWeek12 ? samples : []) {
       const id = docCode(12, s.order);
       if (await this.docs.exists({ where: { id } })) continue;
       const n = normalizeDoc(s.json, { week: 12, order: s.order });

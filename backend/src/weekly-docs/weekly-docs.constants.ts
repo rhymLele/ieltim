@@ -28,5 +28,7 @@ export const IMPORT_MAX_BYTES = 1024 * 1024;
 export const MIN_SCHEDULE_LEAD_MS = 5 * 60 * 1000;
 export const SOFT_DELETE_RETENTION_DAYS = 30;
 export const DEFAULT_STAGE_GOAL = 5;
+/** Tự sinh tuần: luôn có sẵn tuần này + N tuần tới (ghi đè bằng WEEKLY_WEEKS_AHEAD). */
+export const DEFAULT_WEEKS_AHEAD = 4;
 /** Gộp các lần tự lưu cùng người trong khoảng này thành một phiên bản (UC-D14). */
 export const AUTOSAVE_SESSION_MS = 30 * 60 * 1000;
