@@ -119,7 +119,8 @@ class _VocabularyFormPageState extends State<VocabularyFormPage> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField(
-                  value: _level,
+                  key: ValueKey(_level),
+                  initialValue: _level,
                   decoration: const InputDecoration(labelText: 'Level *'),
                   items: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
                       .map((l) => DropdownMenuItem(value: l, child: Text(l)))

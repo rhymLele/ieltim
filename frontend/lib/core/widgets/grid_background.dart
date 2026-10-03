@@ -48,7 +48,7 @@ class GridBackgroundContainer extends StatelessWidget {
             child: CustomPaint(
               painter: GridBackgroundPainter(
                 spacing: 32,
-                lineColor: const Color(0xFF800020).withOpacity(0.06),
+                lineColor: const Color(0xFF800020).withValues(alpha: 0.06),
               ),
             ),
           ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/constants/preview_auth.dart';
 import 'package:frontend/core/widgets/dragon_loader.dart';
 import 'package:frontend/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:frontend/features/auth/presentation/bloc/auth_event.dart';
@@ -21,6 +20,10 @@ class AccessKeyPage extends StatefulWidget {
 class _AccessKeyPageState extends State<AccessKeyPage> {
   final _keyController = TextEditingController();
 
+  /// The dragon animation has played through. Login may still be waiting on
+  /// a slow (cold-starting) server, so navigation needs both to be done.
+  bool _dragonDone = false;
+
   @override
   void dispose() {
     _keyController.dispose();
@@ -31,18 +34,29 @@ class _AccessKeyPageState extends State<AccessKeyPage> {
     final bloc = context.read<AuthBloc>();
     if (bloc.state is AuthLoading || bloc.state is AuthSuccess) return;
     FocusScope.of(context).unfocus();
+    _dragonDone = false;
     bloc.add(LoginWithAccessKey(key: _keyController.text.trim()));
   }
 
   void _finishLoading() {
-    if (mounted && context.read<AuthBloc>().state is AuthSuccess) {
+    _dragonDone = true;
+    _goHomeIfReady();
+  }
+
+  void _goHomeIfReady() {
+    if (mounted &&
+        _dragonDone &&
+        context.read<AuthBloc>().state is AuthSuccess) {
       context.go('/home');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
+    return BlocConsumer<AuthBloc, AuthState>(
+      // Login finishing after the dragon is done must still navigate.
+      listenWhen: (_, state) => state is AuthSuccess,
+      listener: (_, _) => _goHomeIfReady(),
       builder: (context, state) {
         final loading = state is AuthLoading || state is AuthSuccess;
         return Scaffold(

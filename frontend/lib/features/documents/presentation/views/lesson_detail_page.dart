@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 
 import 'package:frontend/core/network/api_client.dart';
@@ -162,7 +161,7 @@ class _Badge extends StatelessWidget {
       margin: const EdgeInsets.only(right: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -471,10 +470,10 @@ class _TheoryBlock extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.04),
+            color: AppColors.primary.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(8),
             border: Border(
-              left: BorderSide(color: AppColors.primary.withOpacity(0.4), width: 3),
+              left: BorderSide(color: AppColors.primary.withValues(alpha: 0.4), width: 3),
             ),
           ),
           child: Text(
@@ -532,9 +531,9 @@ class _PracticeQuestionState extends State<_PracticeQuestion> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32).withOpacity(0.05),
+                  color: const Color(0xFF2E7D32).withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.2)),
+                  border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
                 ),
                 child: Text(
                   'Suggested: ${data['suggestedAnswer']}',

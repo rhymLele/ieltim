@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collocations chủ đề Môi trường</title>
+<style>
+  :root { --brand: #800020; --cream: #fff9f2; --ink: #2a1418; --muted: #6b4a4f; --gold: #e7a23b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--cream); color: var(--ink); overflow: hidden; }
+  .deck { position: relative; height: 100%; display: flex; flex-direction: column; }
+  .stage { position: relative; flex: 1; overflow: hidden; touch-action: pan-y; }
+  .slide { position: absolute; inset: 0; padding: clamp(20px, 5vw, 56px); display: flex; flex-direction: column; justify-content: center; gap: 14px;
+           opacity: 0; transform: translateX(40px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
+  .slide.on { opacity: 1; transform: none; pointer-events: auto; }
+  .slide.back { transform: translateX(-40px); }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  h1 { margin: 0; font-size: clamp(26px, 5vw, 44px); line-height: 1.15; color: var(--brand); }
+  h2 { margin: 0; font-size: clamp(22px, 3.6vw, 32px); color: var(--brand); }
+  p, li { font-size: clamp(15px, 2vw, 19px); line-height: 1.55; margin: 0; }
+  ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+  b { color: var(--brand); }
+  .card { background: #fff; border: 1px solid #efdccb; border-radius: 14px; padding: 14px 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .quiz button { font: inherit; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e5d2bf; background: #fff; cursor: pointer; text-align: left; }
+  .quiz button.right { border-color: #2f7a4b; background: #e6f3ea; }
+  .quiz button.wrong { border-color: var(--brand); background: #fbeaec; }
+  .bar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px; border-top: 1px solid #efdccb; background: #fff; }
+  .bar button { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid #e5d2bf; background: #fff; color: var(--brand); font-size: 20px; cursor: pointer; }
+  .bar button.primary { background: var(--brand); border-color: var(--brand); color: var(--cream); }
+  .bar button:disabled { opacity: .35; cursor: default; }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: #e5d2bf; }
+  .dots i.on { background: var(--brand); width: 22px; border-radius: 4px; }
+  .count { font-size: 13px; font-weight: 700; color: var(--muted); min-width: 44px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="stage" id="stage">
+    <section class="slide">
+      <div class="eyebrow">Vocabulary · Tuần 12</div>
+      <h1>Collocations chủ đề Môi trường</h1>
+      <p>6 slide · dùng phím ← → hoặc vuốt để chuyển.</p>
+    </section>
+    <section class="slide">
+      <div class="eyebrow">1 · Ô nhiễm</div>
+      <h2>Pollution</h2>
+      <ul>
+        <li><b>tackle / combat pollution</b> — giải quyết ô nhiễm</li>
+        <li><b>air / water / noise pollution</b> — ô nhiễm không khí / nước / tiếng ồn</li>
+        <li><b>toxic emissions</b> — khí thải độc hại</li>
+      </ul>
+    </section>
+    <section class="slide">
+      <div class="eyebrow">2 · Biến đổi khí hậu</div>
+      <h2>Climate change</h2>
+      <ul>
+        <li><b>mitigate the effects of</b> climate change — giảm nhẹ tác động</li>
+        <li><b>carbon footprint</b> — lượng khí thải carbon</li>
+        <li><b>rising sea levels</b> — mực nước biển dâng</li>
+      </ul>
+    </section>
+    <section class="slide">
+      <div class="eyebrow">3 · Giải pháp</div>
+      <h2>Solutions</h2>
+      <div class="grid">
+        <div class="card"><b>renewable energy</b><br>năng lượng tái tạo</div>
+        <div class="card"><b>reduce waste</b><br>giảm rác thải</div>
+        <div class="card"><b>raise awareness</b><br>nâng cao nhận thức</div>
+      </div>
+    </section>
+    <section class="slide">
+      <div class="eyebrow">4 · Ví dụ Writing Task 2</div>
+      <h2>In context</h2>
+      <p class="card">Governments should invest in <b>renewable energy</b> in order to <b>mitigate the effects of climate change</b> and reduce <b>toxic emissions</b> from factories.</p>
+    </section>
+    <section class="slide quiz">
+      <div class="eyebrow">5 · Kiểm tra nhanh</div>
+      <h2>Chọn collocation đúng</h2>
+      <p>We need to ___ pollution in big cities.</p>
+      <div class="grid">
+        <button data-ok="0">make</button>
+        <button data-ok="1">tackle</button>
+        <button data-ok="0">do</button>
+      </div>
+    </section>
+  </div>
+  <div class="bar">
+    <button id="prev" aria-label="Slide trước">‹</button>
+    <div class="dots" id="dots"></div>
+    <button id="next" class="primary" aria-label="Slide sau">›</button>
+    <span class="count" id="count"></span>
+  </div>
+</div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const dots = document.getElementById('dots');
+  const count = document.getElementById('count');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  slides.forEach(() => dots.appendChild(document.createElement('i')));
+  let i = 0;
+  function go(n) {
+    if (n < 0 || n >= slides.length) return;
+    slides.forEach((s, k) => { s.classList.toggle('on', k === n); s.classList.toggle('back', k < n); });
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === n));
+    count.textContent = (n + 1) + ' / ' + slides.length;
+    prev.disabled = n === 0;
+    next.disabled = n === slides.length - 1;
+    i = n;
+  }
+  prev.onclick = () => go(i - 1);
+  next.onclick = () => go(i + 1);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(i + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+  });
+  let x0 = null;
+  const stage = document.getElementById('stage');
+  stage.addEventListener('pointerdown', (e) => { x0 = e.clientX; });
+  stage.addEventListener('pointerup', (e) => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0; x0 = null;
+    if (Math.abs(dx) > 40) go(dx < 0 ? i + 1 : i - 1);
+  });
+  document.querySelectorAll('.quiz button').forEach((b) => {
+    b.onclick = () => b.classList.add(b.dataset.ok === '1' ? 'right' : 'wrong');
+  });
+  go(0);
+</script>
+</body>
+</html>

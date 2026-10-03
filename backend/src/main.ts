@@ -1,26 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/exceptions/all-exceptions.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { configureApp } from './app.setup';
 import * as express from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
-
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
-  app.enableCors();
-  app.setGlobalPrefix('api', { exclude: ['health'] });
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  configureApp(app);
 
   const possiblePaths = [
     path.join(__dirname, '../../../frontend/build/web'),
@@ -32,11 +19,18 @@ async function bootstrap() {
   if (distPath && fs.existsSync(distPath)) {
     const expressApp = app.getHttpAdapter().getInstance();
     expressApp.use(express.static(distPath));
-    expressApp.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      if (req.path.startsWith('/api') || req.path === '/health') return next();
-      if (req.method !== 'GET') return next();
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    expressApp.use(
+      (
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        if (req.path.startsWith('/api') || req.path === '/health')
+          return next();
+        if (req.method !== 'GET') return next();
+        res.sendFile(path.join(distPath, 'index.html'));
+      },
+    );
   }
 
   const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;

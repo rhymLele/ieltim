@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/core/storage/token_storage.dart';
 import 'package:frontend/features/web_resources/presentation/bloc/web_resources_bloc.dart';
 import 'package:frontend/features/web_resources/presentation/widgets/web_resource_card.dart';
@@ -94,7 +93,7 @@ class _WebResourcesPageState extends State<WebResourcesPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, size: 48, color: Colors.red.withOpacity(0.5)),
+                        Icon(Icons.error_outline, size: 48, color: Colors.red.withValues(alpha: 0.5)),
                         const SizedBox(height: 12),
                         Text(state.error!,
                             style: const TextStyle(color: Colors.red)),
@@ -158,7 +157,7 @@ class _WebResourcesPageState extends State<WebResourcesPage> {
       ),
       padding: const EdgeInsets.only(bottom: 16),
       itemCount: 8,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),

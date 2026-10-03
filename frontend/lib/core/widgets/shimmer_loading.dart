@@ -23,7 +23,7 @@ class ShimmerLoading extends StatelessWidget {
         padding: EdgeInsets.zero,
         shrinkWrap: true,
         itemCount: itemCount,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) => Container(
           height: itemHeight,
           decoration: BoxDecoration(
@@ -49,6 +49,7 @@ class ShimmerLoading extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       height: 14,
@@ -59,7 +60,7 @@ class ShimmerLoading extends StatelessWidget {
                       ),
                       constraints: const BoxConstraints(maxWidth: 200),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Container(
                       height: 10,
                       width: double.infinity,

@@ -6,9 +6,7 @@ import 'package:frontend/core/storage/token_storage.dart';
 import 'package:frontend/core/widgets/grid_background.dart';
 import 'package:frontend/core/widgets/vu_mon_progress.dart';
 import 'package:frontend/features/home/presentation/views/home_page.dart';
-import 'package:frontend/features/documents/presentation/bloc/weekly_documents_bloc.dart';
-import 'package:frontend/features/documents/presentation/views/weekly_documents_page.dart';
-import 'package:frontend/features/weekly_docs/presentation/views/weeks_screen.dart';
+import 'package:frontend/features/weekly_docs/presentation/user/weeks_screen.dart';
 import 'package:frontend/features/search/presentation/bloc/search_bloc.dart';
 import 'package:frontend/features/search/presentation/views/search_page.dart';
 import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
@@ -21,7 +19,8 @@ import 'package:frontend/features/admin/vocabularies/presentation/views/admin_vo
 import 'package:frontend/features/admin/sentence_patterns/presentation/views/admin_sentence_patterns_page.dart';
 import 'package:frontend/features/admin/tags/presentation/views/admin_tags_page.dart';
 import 'package:frontend/features/admin/access_keys/presentation/views/admin_access_keys_page.dart';
-import 'package:frontend/features/weekly_docs/presentation/views/admin/admin_week_docs_screen.dart';
+import 'package:frontend/features/weekly_docs/presentation/admin/admin_docs_screen.dart';
+import 'package:frontend/features/weekly_docs/data/weekly_docs_repository_provider.dart';
 
 class TabPage {
   final String label;
@@ -58,7 +57,7 @@ List<TabPage> get allTabs => [
   TabPage(
     label: 'Theo tuần',
     icon: Icons.calendar_month,
-    builder: (_) => const WeeksScreen(),
+    builder: (_) => WeeksScreen(repo: weeklyDocsRepo),
     route: '/weekly',
   ),
   TabPage(
@@ -118,7 +117,7 @@ List<TabPage> get allTabs => [
   TabPage(
     label: 'Tài liệu tuần',
     icon: Icons.menu_book,
-    builder: (_) => const AdminWeekDocsScreen(),
+    builder: (_) => AdminDocsScreen(repo: weeklyDocsRepo),
     adminOnly: true,
     route: '/admin/weekly-docs',
   ),

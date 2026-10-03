@@ -102,6 +102,7 @@ class YourPondCard extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 const title = Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Ao của bạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF2A1418))),
@@ -109,6 +110,8 @@ class YourPondCard extends StatelessWidget {
                     Text(
                       'Mỗi ngày học liên tiếp thêm một chú cá. Chạm vào mặt nước thử xem.',
                       style: TextStyle(fontSize: 13, color: _muted),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 );
@@ -125,6 +128,7 @@ class YourPondCard extends StatelessWidget {
                 );
                 if (narrow) {
                   return Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [title, const SizedBox(height: 12), stats],
                   );

@@ -140,7 +140,7 @@ class _DayCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'No lessons',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withOpacity(0.6)),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary.withValues(alpha: 0.6)),
                 ),
               )
             else ...[
@@ -186,7 +186,7 @@ class _LessonChip extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(

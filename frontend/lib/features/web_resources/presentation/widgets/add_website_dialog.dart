@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/network/api_client.dart';
-import 'package:frontend/features/web_resources/presentation/bloc/web_resources_bloc.dart';
 
 class AddWebsiteDialog extends StatefulWidget {
   const AddWebsiteDialog({super.key});
@@ -65,10 +64,10 @@ class _AddWebsiteDialogState extends State<AddWebsiteDialog> {
         'status': 'PUBLISHED',
         'resourceType': 'WEBSITE',
       });
-      if (context.mounted) {
-        Navigator.pop(context, true);
-      }
+      if (!mounted) return;
+      Navigator.pop(context, true);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _saving = false;
         _fetchError = e.toString().contains('DUPLICATE_URL')
@@ -141,7 +140,8 @@ class _AddWebsiteDialogState extends State<AddWebsiteDialog> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _category.isEmpty ? null : _category,
+                        key: ValueKey(_category.isEmpty ? null : _category),
+                        initialValue: _category.isEmpty ? null : _category,
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           border: OutlineInputBorder(),
@@ -218,7 +218,7 @@ class _AddWebsiteDialogState extends State<AddWebsiteDialog> {
                 width: 80,
                 height: 60,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 80,
                   height: 60,
                   color: Colors.white,
@@ -231,7 +231,7 @@ class _AddWebsiteDialogState extends State<AddWebsiteDialog> {
               p['faviconUrl'],
               width: 32,
               height: 32,
-              errorBuilder: (_, __, ___) => const Icon(Icons.language),
+              errorBuilder: (_, _, _) => const Icon(Icons.language),
             ),
           const SizedBox(width: 12),
           Expanded(

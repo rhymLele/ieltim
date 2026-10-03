@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ieltshub.app/schemas/weekly_doc.v1.json",
   "title": "IELTS Hub weekly document (schemaVersion 1)",
+  "description": "Tài liệu JSON (section + block), hoặc tài liệu HTML khi template = \"html\" (file 9): khi đó sections luôn rỗng và html bắt buộc (tối đa 5 MB UTF-8, BE kiểm tra).",
   "type": "object",
   "required": ["schemaVersion", "title", "sections"],
   "properties": {
@@ -10,7 +11,9 @@
     "week": { "type": "integer", "minimum": 1 },
     "order": { "type": "integer", "minimum": 1 },
     "title": { "type": "string", "minLength": 1, "maxLength": 200 },
-    "template": { "enum": ["reading-lesson", "writing-task2", "vocab-set", "speaking-part2", "blank", "custom"] },
+    "template": { "enum": ["reading-lesson", "writing-task2", "vocab-set", "speaking-part2", "blank", "custom", "html"] },
+    "html": { "type": "string", "minLength": 1, "description": "Chỉ dùng khi template = html: nguyên file .html (đã có CSS, JS)." },
+    "htmlFileName": { "type": "string", "description": "Tên file gốc, chỉ để hiển thị cho admin." },
     "meta": {
       "type": "object",
       "properties": {
@@ -24,10 +27,13 @@
       "additionalProperties": true
     },
     "sections": {
-      "type": "array", "minItems": 1,
+      "type": "array",
       "items": { "$ref": "#/$defs/section" }
     }
   },
+  "if": { "properties": { "template": { "const": "html" } }, "required": ["template"] },
+  "then": { "required": ["html"], "properties": { "sections": { "maxItems": 0 } } },
+  "else": { "properties": { "sections": { "minItems": 1 } } },
   "additionalProperties": true,
   "$defs": {
     "text": { "type": "string", "minLength": 1 },

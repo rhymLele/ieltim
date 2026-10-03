@@ -171,8 +171,8 @@ class _WordbookPageState extends State<WordbookPage> {
   Future<void> _exportJson() async {
     final items = context.read<WordbookBloc>().state.items;
     final json = jsonEncode(items.map((e) => e.toJson()).toList());
-    final data = Uint8List.fromList(utf8.encode(json));
     await Clipboard.setData(ClipboardData(text: json));
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('JSON copied to clipboard'),
@@ -183,11 +183,12 @@ class _WordbookPageState extends State<WordbookPage> {
 
   Future<void> _importJson() async {
     final result = await fp.FilePicker.pickFiles();
-    if (result.isEmpty) return;
+    if (!mounted || result.isEmpty) return;
 
     try {
       final file = result.single;
       final content = await file.xFile.readAsString();
+      if (!mounted) return;
       final list = jsonDecode(content) as List;
       final bloc = context.read<WordbookBloc>();
       final existing = bloc.state.items;
@@ -208,6 +209,7 @@ class _WordbookPageState extends State<WordbookPage> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid JSON file'),
@@ -410,7 +412,7 @@ class _WordbookPageState extends State<WordbookPage> {
             decoration: InputDecoration(
               hintText: placeholder,
               hintStyle: GoogleFonts.instrumentSans(
-                color: _textSecondary.withOpacity(0.6),
+                color: _textSecondary.withValues(alpha: 0.6),
                 fontSize: isLarge ? 16 : 14,
               ),
               border: InputBorder.none,
@@ -446,7 +448,7 @@ class _WordbookPageState extends State<WordbookPage> {
                   decoration: InputDecoration(
                     hintText: 'Search your words...',
                     hintStyle: GoogleFonts.instrumentSans(
-                      color: _textSecondary.withOpacity(0.6),
+                      color: _textSecondary.withValues(alpha: 0.6),
                       fontSize: 14,
                     ),
                     prefixIcon: const Icon(
@@ -672,7 +674,7 @@ class _WordCard extends StatelessWidget {
                     item.example!,
                     style: GoogleFonts.instrumentSans(
                       fontSize: 13,
-                      color: _textSecondary.withOpacity(0.8),
+                      color: _textSecondary.withValues(alpha: 0.8),
                       fontStyle: FontStyle.italic,
                       height: 1.4,
                     ),
@@ -683,7 +685,7 @@ class _WordCard extends StatelessWidget {
                   'added $dateStr',
                   style: GoogleFonts.ibmPlexMono(
                     fontSize: 11,
-                    color: _textSecondary.withOpacity(0.6),
+                    color: _textSecondary.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -718,7 +720,7 @@ class _PillDeleteButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _delete.withOpacity(0.4)),
+          border: Border.all(color: _delete.withValues(alpha: 0.4)),
         ),
         child: Text(
           label,

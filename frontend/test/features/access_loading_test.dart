@@ -54,45 +54,49 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets(
-    'waits for authentication and dragon completion before navigating',
-    (tester) async {
-      final api = _LoginApi();
-      await mount(tester, api);
-      expect(find.byType(DragonLoader), findsOneWidget);
-      double progress() =>
-          tester.widget<DragonLoader>(find.byType(DragonLoader)).progress!;
-      await tester.pump(const Duration(seconds: 1));
-      final early = progress();
-      expect(early, greaterThan(0));
-      await tester.pump(const Duration(seconds: 7));
-      expect(progress(), greaterThan(early));
-      expect(progress(), lessThan(1));
-      expect(find.text('Home loaded'), findsNothing);
-      api.response.complete(
-        Response(
-          requestOptions: RequestOptions(path: '/auth/access-key'),
-          data: {
-            'accessToken': 'test-token',
-            'user': {'id': 'user-1', 'role': 'USER'},
-          },
-        ),
-      );
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 20));
-      }
-      expect(find.byType(DragonLoader), findsOneWidget);
-      expect(
-        tester.widget<DragonLoader>(find.byType(DragonLoader)).progress,
-        1,
-      );
-      expect(find.text('Home loaded'), findsNothing);
-      await tester.pump(const Duration(seconds: 8));
-      await tester.pumpAndSettle();
-      expect(find.text('Home loaded'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+  Response<dynamic> loginOk() => Response(
+    requestOptions: RequestOptions(path: '/auth/access-key'),
+    data: {
+      'accessToken': 'test-token',
+      'user': {'id': 'user-1', 'role': 'USER'},
     },
   );
+
+  testWidgets('fast login still waits for the dragon to finish', (
+    tester,
+  ) async {
+    final api = _LoginApi();
+    await mount(tester, api);
+    expect(find.byType(DragonLoader), findsOneWidget);
+    api.response.complete(loginOk());
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(find.byType(DragonLoader), findsOneWidget);
+    expect(find.text('Home loaded'), findsNothing);
+    await tester.pump(const Duration(seconds: 8));
+    await tester.pumpAndSettle();
+    expect(find.text('Home loaded'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('slow login navigates as soon as it succeeds after the dragon', (
+    tester,
+  ) async {
+    final api = _LoginApi();
+    await mount(tester, api);
+    // The dragon plays once (7 s) while the server is still cold-starting.
+    await tester.pump(const Duration(seconds: 8));
+    expect(find.byType(DragonLoader), findsOneWidget);
+    expect(find.text('Home loaded'), findsNothing);
+    api.response.complete(loginOk());
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Home loaded'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('failed key restores the form and keeps the entered key', (
     tester,

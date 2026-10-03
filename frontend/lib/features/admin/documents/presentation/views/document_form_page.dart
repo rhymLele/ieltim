@@ -112,7 +112,8 @@ class _DocumentFormPageState extends State<DocumentFormPage> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField(
-                        value: _type,
+                        key: ValueKey(_type),
+                        initialValue: _type,
                         decoration: const InputDecoration(labelText: 'Type'),
                         items: ['WEEKLY', 'WEB_RESOURCE', 'ARTICLE']
                             .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -123,7 +124,8 @@ class _DocumentFormPageState extends State<DocumentFormPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField(
-                        value: _status,
+                        key: ValueKey(_status),
+                        initialValue: _status,
                         decoration: const InputDecoration(labelText: 'Status'),
                         items: ['DRAFT', 'PUBLISHED', 'ARCHIVED']
                             .map((s) => DropdownMenuItem(value: s, child: Text(s)))

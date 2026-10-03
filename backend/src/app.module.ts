@@ -31,6 +31,8 @@ import { LessonVocabulary } from './lessons/entities/lesson-vocabulary.entity';
 import { LessonSentencePattern } from './lessons/entities/lesson-sentence-pattern.entity';
 import { TheoryBlock } from './lessons/entities/theory-block.entity';
 import { Practice } from './lessons/entities/practice.entity';
+import { WeeklyDocsModule } from './weekly-docs/weekly-docs.module';
+import { WEEKLY_DOC_ENTITIES } from './weekly-docs/entities';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { Practice } from './lessons/entities/practice.entity';
           Vocabulary, Collocation, SentencePattern,
           Tag, IeltsContext, Comment, WebResource,
           LessonVocabulary, LessonSentencePattern, TheoryBlock, Practice,
+          ...WEEKLY_DOC_ENTITIES,
         ];
 
         const databaseUrl = config.get('DATABASE_URL');
@@ -93,6 +96,7 @@ import { Practice } from './lessons/entities/practice.entity';
     WebResourcesModule,
     SearchModule,
     LessonsModule,
+    WeeklyDocsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -220,7 +220,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 class _VocabularyBlock extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  _VocabularyBlock({required this.data});
+  const _VocabularyBlock({required this.data});
 
   static final _apiClient = ApiClient();
 
@@ -297,7 +297,7 @@ class _VocabularyBlock extends StatelessWidget {
 class _SentencePatternBlock extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  _SentencePatternBlock({required this.data});
+  const _SentencePatternBlock({required this.data});
 
   static final _apiClient = ApiClient();
 
