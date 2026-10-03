@@ -1,71 +1,126 @@
-import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../constants/app_env.dart';
+import '../storage/token_storage.dart';
+import 'api_interceptors.dart';
 
 class ApiClient {
-  late final Dio _dio;
+  ApiClient({String? baseUrl, TokenStorage? tokenStorage})
+    : _dio = _createDio(
+        baseUrl: baseUrl,
+        tokenStorage: tokenStorage ?? TokenStorage(),
+      );
 
-  static String get _baseUrl => kReleaseMode
-      ? 'https://ieltim.onrender.com/api'
-      : 'http://localhost:3000/api';
+  final Dio _dio;
 
-  ApiClient() {
-    _dio = Dio(BaseOptions(
-      baseUrl: _baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ));
+  static BaseOptions _buildDefaultOptions({String? baseUrl}) => BaseOptions(
+    baseUrl: baseUrl ?? AppEnv.current.baseUrl,
+    connectTimeout: const Duration(seconds: 10),
+    sendTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+    headers: {'Accept': 'application/json'},
+  );
 
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString('access_token');
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          final data = response.data;
-          if (data is Map && data.containsKey('status')) {
-            response.data = data['data'];
-          }
-          handler.next(response);
-        },
-        onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.remove('access_token');
-            await prefs.remove('user_role');
-            await prefs.remove('user_id');
-          }
-          handler.next(error);
-        },
-      ),
-    );
+  static Dio _createDio({String? baseUrl, required TokenStorage tokenStorage}) {
+    return Dio(_buildDefaultOptions(baseUrl: baseUrl))
+      ..interceptors.addAll([
+        ApiAuthInterceptor(tokenStorage),
+        ApiResponseInterceptor(),
+      ]);
   }
 
   Dio get dio => _dio;
 
-  Future<Response<T>> get<T>(String path, {Map<String, dynamic>? queryParameters}) {
-    return _dio.get<T>(path, queryParameters: queryParameters);
-  }
+  /// Per-request options never replace the shared Dio configuration.
+  /// Errors remain DioException so repositories can handle backend error data.
+  Future<Response<T>> request<T>(
+    String path, {
+    required String method,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => _dio.request<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: (options ?? Options()).copyWith(method: method),
+    cancelToken: cancelToken,
+  );
 
-  Future<Response<T>> post<T>(String path, {dynamic data}) {
-    return _dio.post<T>(path, data: data);
-  }
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => request<T>(
+    path,
+    method: 'GET',
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
-  Future<Response<T>> patch<T>(String path, {dynamic data}) {
-    return _dio.patch<T>(path, data: data);
-  }
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => request<T>(
+    path,
+    method: 'POST',
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
-  Future<Response<T>> put<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters}) {
-    return _dio.put<T>(path, data: data, queryParameters: queryParameters);
-  }
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => request<T>(
+    path,
+    method: 'PATCH',
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
-  Future<Response<T>> delete<T>(String path) {
-    return _dio.delete<T>(path);
-  }
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => request<T>(
+    path,
+    method: 'PUT',
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
+
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) => request<T>(
+    path,
+    method: 'DELETE',
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
+
+  /// Only close a client when its owner no longer needs it.
+  void close({bool force = false}) => _dio.close(force: force);
 }

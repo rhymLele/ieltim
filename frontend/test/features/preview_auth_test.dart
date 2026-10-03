@@ -12,7 +12,13 @@ class _OfflineApi extends ApiClient {
   int calls = 0;
 
   @override
-  Future<Response<T>> post<T>(String path, {dynamic data}) async {
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
     calls++;
     throw StateError('Backend is offline');
   }

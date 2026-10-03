@@ -1,134 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/core/routes/app_routes.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/storage/token_storage.dart';
 import 'package:frontend/core/widgets/grid_background.dart';
 import 'package:frontend/core/widgets/vu_mon_progress.dart';
-import 'package:frontend/features/home/presentation/views/home_page.dart';
-import 'package:frontend/features/weekly_docs/presentation/user/weeks_screen.dart';
-import 'package:frontend/features/search/presentation/bloc/search_bloc.dart';
-import 'package:frontend/features/search/presentation/views/search_page.dart';
-import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
-import 'package:frontend/features/wordbook/presentation/views/wordbook_page.dart';
-import 'package:frontend/features/web_resources/presentation/bloc/web_resources_bloc.dart';
-import 'package:frontend/features/web_resources/presentation/views/web_resources_page.dart';
-import 'package:frontend/features/admin/documents/presentation/bloc/admin_documents_bloc.dart';
-import 'package:frontend/features/admin/documents/presentation/views/admin_documents_page.dart';
-import 'package:frontend/features/admin/vocabularies/presentation/views/admin_vocabularies_page.dart';
-import 'package:frontend/features/admin/sentence_patterns/presentation/views/admin_sentence_patterns_page.dart';
-import 'package:frontend/features/admin/tags/presentation/views/admin_tags_page.dart';
-import 'package:frontend/features/admin/access_keys/presentation/views/admin_access_keys_page.dart';
-import 'package:frontend/features/weekly_docs/presentation/admin/admin_docs_screen.dart';
-import 'package:frontend/features/weekly_docs/data/weekly_docs_repository_provider.dart';
 
+/// Một mục trên thanh điều hướng. Trang hiển thị do router quyết định theo [route]
+/// (khai báo ở app_router.dart) — đây chỉ là nhãn, icon và đường dẫn.
 class TabPage {
   final String label;
   final IconData icon;
-  final WidgetBuilder builder;
+  final String route;
   final bool adminOnly;
-  final String? route;
 
   const TabPage({
     required this.label,
     required this.icon,
-    required this.builder,
+    required this.route,
     this.adminOnly = false,
-    this.route,
   });
+
+  /// Key ổn định cho test/Maestro: `/admin/weekly-docs` → `nav_admin_weekly_docs_tab`.
+  Key get navKey => Key('nav_${route.substring(1).replaceAll(RegExp('[/-]'), '_')}_tab');
 }
 
-List<TabPage> get allTabs => [
-  TabPage(
-    label: 'Home',
-    icon: Icons.home,
-    builder: (_) => const HomePage(),
-    route: '/home',
-  ),
-  TabPage(
-    label: 'Tài liệu web',
-    icon: Icons.description,
-    builder: (_) => BlocProvider(
-      create: (_) => WebResourcesBloc()..add(LoadResources()),
-      child: const WebResourcesPage(),
-    ),
-    route: '/resources',
-  ),
-  TabPage(
-    label: 'Theo tuần',
-    icon: Icons.calendar_month,
-    builder: (_) => WeeksScreen(repo: weeklyDocsRepo),
-    route: '/weekly',
-  ),
-  TabPage(
-    label: 'Sổ từ',
-    icon: Icons.book_outlined,
-    builder: (_) => BlocProvider(
-      create: (_) => WordbookBloc()..add(LoadWordbook()),
-      child: const WordbookPage(),
-    ),
-    route: '/wordbook',
-  ),
-  TabPage(
-    label: 'Search',
-    icon: Icons.search,
-    builder: (_) =>
-        BlocProvider(create: (_) => SearchBloc(), child: const SearchPage()),
-    route: '/search',
-  ),
-  TabPage(
-    label: 'Quản lý tài liệu',
-    icon: Icons.edit_note,
-    builder: (_) => BlocProvider(
-      create: (_) => AdminDocumentsBloc()..add(LoadAdminDocuments()),
-      child: const AdminDocumentsPage(),
-    ),
-    adminOnly: true,
-    route: '/admin',
-  ),
-  TabPage(
-    label: 'Từ vựng',
-    icon: Icons.translate,
-    builder: (_) => const AdminVocabulariesPage(),
-    adminOnly: true,
-    route: '/admin/vocabularies',
-  ),
-  TabPage(
-    label: 'Cấu trúc câu',
-    icon: Icons.format_quote,
-    builder: (_) => const AdminSentencePatternsPage(),
-    adminOnly: true,
-    route: '/admin/sentence-patterns',
-  ),
-  TabPage(
-    label: 'Tags',
-    icon: Icons.local_offer,
-    builder: (_) => const AdminTagsPage(),
-    adminOnly: true,
-    route: '/admin/tags',
-  ),
-  TabPage(
-    label: 'Access Keys',
-    icon: Icons.vpn_key,
-    builder: (_) => const AdminAccessKeysPage(),
-    adminOnly: true,
-    route: '/admin/access-keys',
-  ),
-  TabPage(
-    label: 'Tài liệu tuần',
-    icon: Icons.menu_book,
-    builder: (_) => AdminDocsScreen(repo: weeklyDocsRepo),
-    adminOnly: true,
-    route: '/admin/weekly-docs',
-  ),
+const allTabs = <TabPage>[
+  TabPage(label: 'Home', icon: Icons.home, route: AppRoutes.home),
+  TabPage(label: 'Tài liệu web', icon: Icons.description, route: AppRoutes.resources),
+  TabPage(label: 'Theo tuần', icon: Icons.calendar_month, route: AppRoutes.weekly),
+  TabPage(label: 'Sổ từ', icon: Icons.book_outlined, route: AppRoutes.wordbook),
+  TabPage(label: 'Search', icon: Icons.search, route: AppRoutes.search),
+  TabPage(label: 'Quản lý tài liệu', icon: Icons.edit_note, route: AppRoutes.admin, adminOnly: true),
+  TabPage(label: 'Từ vựng', icon: Icons.translate, route: AppRoutes.adminVocabularies, adminOnly: true),
+  TabPage(label: 'Cấu trúc câu', icon: Icons.format_quote, route: AppRoutes.adminSentencePatterns, adminOnly: true),
+  TabPage(label: 'Tags', icon: Icons.local_offer, route: AppRoutes.adminTags, adminOnly: true),
+  TabPage(label: 'Access Keys', icon: Icons.vpn_key, route: AppRoutes.adminAccessKeys, adminOnly: true),
+  TabPage(label: 'Tài liệu tuần', icon: Icons.menu_book, route: AppRoutes.adminWeeklyDocs, adminOnly: true),
 ];
+
+/// Tab đang chọn theo URL: route của tab trùng, hoặc là tiền tố dài nhất
+/// (`/weekly/doc/w12-doc1` → "Theo tuần", `/admin/vocabularies/create` → "Từ vựng").
+/// Không khớp tab nào (vd trang chi tiết bài học) → -1.
+int tabIndexForLocation(List<TabPage> tabs, String location) {
+  var best = -1;
+  var bestLength = -1;
+  for (var i = 0; i < tabs.length; i++) {
+    final route = tabs[i].route;
+    final matches = location == route || location.startsWith('$route/');
+    if (matches && route.length > bestLength) {
+      best = i;
+      bestLength = route.length;
+    }
+  }
+  return best;
+}
 
 const _mobileBreakpoint = 840.0;
 
+/// Khung chung (sidebar / drawer) quanh trang do router dựng. [location] là đường dẫn hiện tại,
+/// dùng để tô tab đang chọn; [child] là trang của route đó.
 class AppLayout extends StatefulWidget {
+  final String location;
   final Widget? child;
 
-  const AppLayout({super.key, this.child});
+  const AppLayout({super.key, this.location = AppRoutes.home, this.child});
 
   @override
   State<AppLayout> createState() => _AppLayoutState();
@@ -136,7 +72,6 @@ class AppLayout extends StatefulWidget {
 
 class _AppLayoutState extends State<AppLayout> {
   String? _role;
-  int _activeIndex = 0;
 
   @override
   void initState() {
@@ -152,19 +87,26 @@ class _AppLayoutState extends State<AppLayout> {
   List<TabPage> get _visibleTabs =>
       _role == 'ADMIN' ? allTabs : allTabs.where((t) => !t.adminOnly).toList();
 
+  void _openTab(int index) => context.go(_visibleTabs[index].route);
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < _mobileBreakpoint;
+        final activeIndex = tabIndexForLocation(_visibleTabs, widget.location);
+        // Trang của router nằm trong Navigator lồng; route của nó chặn trợ năng mọi thứ vẽ trước nó
+        // cùng vùng (BlockSemantics) — tách vùng riêng để sidebar / drawer vẫn đọc được (screen reader, Maestro).
+        final page = Semantics(container: true, child: widget.child ?? const SizedBox.shrink());
 
         if (isMobile) {
           return _MobileLayout(
-            activeIndex: _activeIndex,
+            activeIndex: activeIndex,
             role: _role,
             tabs: _visibleTabs,
-            onTabSelected: (index) => setState(() => _activeIndex = index),
+            onTabSelected: _openTab,
             onLogout: _logout,
+            body: page,
           );
         }
 
@@ -179,17 +121,14 @@ class _AppLayoutState extends State<AppLayout> {
                 width: sidebarWidth,
                 child: _Sidebar(
                   tabs: _visibleTabs,
-                  activeIndex: _activeIndex,
+                  activeIndex: activeIndex,
                   role: _role,
-                  onTabSelected: (index) =>
-                      setState(() => _activeIndex = index),
+                  onTabSelected: _openTab,
                   onLogout: _logout,
                 ),
               ),
               Expanded(
-                child: GridBackgroundContainer(
-                  child: _visibleTabs[_activeIndex].builder(context),
-                ),
+                child: GridBackgroundContainer(child: page),
               ),
             ],
           ),
@@ -200,7 +139,7 @@ class _AppLayoutState extends State<AppLayout> {
 
   void _logout() async {
     await TokenStorage().clear();
-    if (mounted) context.go('/access');
+    if (mounted) context.go(AppRoutes.access);
   }
 }
 
@@ -242,8 +181,9 @@ class _NavPanelState extends State<NavPanel> {
     double rowTop(int row) => row < userTabs.length
         ? row * _itemHeight
         : row * _itemHeight + _labelHeight;
-    final activeRow = widget.activeIndex < widget.tabs.length
-        ? rows.indexOf(widget.tabs[widget.activeIndex])
+    final activeIndex = widget.activeIndex;
+    final activeRow = activeIndex >= 0 && activeIndex < widget.tabs.length
+        ? rows.indexOf(widget.tabs[activeIndex])
         : -1;
 
     Widget item(TabPage tab) {
@@ -252,6 +192,7 @@ class _NavPanelState extends State<NavPanel> {
       return SizedBox(
         height: _itemHeight,
         child: InkWell(
+          key: tab.navKey,
           onTap: () => widget.onTabSelected(index),
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -499,6 +440,7 @@ class _MobileLayout extends StatelessWidget {
   final List<TabPage> tabs;
   final ValueChanged<int> onTabSelected;
   final VoidCallback onLogout;
+  final Widget body;
 
   const _MobileLayout({
     required this.activeIndex,
@@ -506,6 +448,7 @@ class _MobileLayout extends StatelessWidget {
     required this.tabs,
     required this.onTabSelected,
     required this.onLogout,
+    required this.body,
   });
 
   @override
@@ -539,10 +482,7 @@ class _MobileLayout extends StatelessWidget {
             message: 'Tìm kiếm',
             child: IconButton(
               icon: const Icon(Icons.search, color: Color(0xFF2A1418)),
-              onPressed: () {
-                final idx = tabs.indexWhere((t) => t.label == 'Search');
-                if (idx >= 0) onTabSelected(idx);
-              },
+              onPressed: () => context.go(AppRoutes.search),
             ),
           ),
         ],
@@ -551,22 +491,22 @@ class _MobileLayout extends StatelessWidget {
           child: Container(height: 1, color: const Color(0xFFEFDCCB)),
         ),
       ),
-      drawer: _MobileDrawer(
-        tabs: tabs,
-        activeIndex: activeIndex,
-        role: role,
-        userName: userName,
-        avatarLetter: avatarLetter,
-        onTabSelected: (index) {
-          onTabSelected(index);
-          Scaffold.of(context).closeDrawer();
-        },
-        onLogout: onLogout,
+      // Builder: context nằm trong Scaffold thì mới đóng được drawer.
+      drawer: Builder(
+        builder: (drawerContext) => _MobileDrawer(
+          tabs: tabs,
+          activeIndex: activeIndex,
+          role: role,
+          userName: userName,
+          avatarLetter: avatarLetter,
+          onTabSelected: (index) {
+            Scaffold.of(drawerContext).closeDrawer();
+            onTabSelected(index);
+          },
+          onLogout: onLogout,
+        ),
       ),
-      body: IndexedStack(
-        index: activeIndex,
-        children: tabs.map((tab) => tab.builder(context)).toList(),
-      ),
+      body: body,
     );
   }
 }

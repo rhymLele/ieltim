@@ -21,7 +21,7 @@ class HtmlFrame extends StatefulWidget {
 class _HtmlFrameState extends State<HtmlFrame> {
   late final WebViewController _c = WebViewController()
     ..setJavaScriptMode(JavaScriptMode.unrestricted)
-    ..setBackgroundColor(AppColors.surface)
+    ..setBackgroundColor(AppColors.cardSurface)
     ..setNavigationDelegate(NavigationDelegate(onNavigationRequest: (r) => isAllowedHtmlNavigation(r.url) ? NavigationDecision.navigate : NavigationDecision.prevent))
     ..loadHtmlString(widget.html);
 

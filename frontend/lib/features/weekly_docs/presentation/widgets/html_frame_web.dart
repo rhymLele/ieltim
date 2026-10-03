@@ -7,6 +7,8 @@ import 'dart:js_interop';
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
+import '../../../../core/theme/app_colors.dart';
+
 class HtmlFrame extends StatefulWidget {
   const HtmlFrame({super.key, required this.html, this.autofocus = false});
 
@@ -33,7 +35,7 @@ class _HtmlFrameState extends State<HtmlFrame> {
       ..border = '0'
       ..width = '100%'
       ..height = '100%'
-      ..backgroundColor = '#ffffff';
+      ..backgroundColor = _cssHex(AppColors.cardSurface);
     if (widget.autofocus) f.onload = (() => f.focus()).toJS;
     _frame = f;
   }
@@ -47,3 +49,6 @@ class _HtmlFrameState extends State<HtmlFrame> {
   @override
   Widget build(BuildContext context) => HtmlElementView.fromTagName(tagName: 'iframe', onElementCreated: _onCreated);
 }
+
+/// Màu cho thuộc tính CSS của iframe (vd `#ffffff`).
+String _cssHex(Color color) => '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';

@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_tokens.dart';
-import '../../data/weekly_docs_repository.dart';
-import '../../domain/weekly_doc.dart';
+import '../../domain/entities/doc_status.dart';
+import '../../domain/entities/weekly_doc.dart';
 
 /// Nhãn section: huy hiệu số + tên section viết hoa.
 class SectionLabel extends StatelessWidget {
@@ -58,12 +58,15 @@ class PillProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.pill),
+      // Luôn rộng hết chỗ: nằm trong Column căn giữa thì không bị co lại bằng phần đã chạy.
       child: SizedBox(
+        width: double.infinity,
         height: height,
         child: Stack(
           children: [
             Positioned.fill(child: ColoredBox(color: track)),
             FractionallySizedBox(
+              alignment: AlignmentDirectional.centerStart,
               widthFactor: value.clamp(0.0, 1.0),
               child: AnimatedContainer(duration: motion(context, 400), color: color),
             ),
@@ -100,25 +103,35 @@ class ViewModeToggle extends StatelessWidget {
         decoration: BoxDecoration(color: AppColors.sidebar, borderRadius: BorderRadius.circular(compact ? AppRadius.md : AppRadius.lg)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [for (final m in order) _segment(context, m)],
+          children: [for (final m in order) _ViewModeSegment(mode: m, selected: m == value, iconOnly: iconOnly, compact: compact, onTap: () => onChanged(m))],
         ),
       ),
     );
   }
+}
 
-  Widget _segment(BuildContext context, DocViewMode m) {
-    final on = m == value;
-    final icon = m == DocViewMode.slide ? Icons.slideshow_outlined : Icons.description_outlined;
-    final label = m == DocViewMode.slide ? 'Slide' : 'Doc';
-    final fg = on ? AppColors.onPrimary : AppColors.textMuted;
+class _ViewModeSegment extends StatelessWidget {
+  const _ViewModeSegment({required this.mode, required this.selected, required this.iconOnly, required this.compact, required this.onTap});
+
+  final DocViewMode mode;
+  final bool selected;
+  final bool iconOnly;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = mode == DocViewMode.slide ? Icons.slideshow_outlined : Icons.description_outlined;
+    final label = mode == DocViewMode.slide ? 'Slide' : 'Doc';
+    final fg = selected ? AppColors.onPrimary : AppColors.textMuted;
     return Tooltip(
-      message: m == DocViewMode.slide ? 'Xem dạng slide' : 'Xem dạng tài liệu',
+      message: mode == DocViewMode.slide ? 'Xem dạng slide' : 'Xem dạng tài liệu',
       child: Material(
-        color: on ? AppColors.primary : Colors.transparent,
+        color: selected ? AppColors.primary : AppColors.transparent,
         borderRadius: BorderRadius.circular(compact ? AppRadius.sm : 9),
         child: InkWell(
           borderRadius: BorderRadius.circular(compact ? AppRadius.sm : 9),
-          onTap: () => onChanged(m),
+          onTap: onTap,
           child: Container(
             height: compact ? 30 : (iconOnly ? 34 : 38),
             constraints: BoxConstraints(minWidth: iconOnly ? 38 : 0),
@@ -171,7 +184,7 @@ class StatusBadge extends StatelessWidget {
 
 /// Card trắng viền chuẩn.
 class AppCard extends StatelessWidget {
-  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpace.lg), this.radius = AppRadius.card, this.onTap, this.color = AppColors.surface, this.borderColor = AppColors.border});
+  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpace.lg), this.radius = AppRadius.card, this.onTap, this.color = AppColors.cardSurface, this.borderColor = AppColors.borderLight});
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double radius;
@@ -249,8 +262,8 @@ class _LilyPadPainter extends CustomPainter {
       ..moveTo(c.dx, c.dy)
       ..arcTo(Rect.fromCircle(center: c, radius: r), -0.2, 5.9, false)
       ..close();
-    canvas.drawPath(pad, Paint()..color = isError ? AppColors.borderStrong : const Color(0xFF9FB08F));
-    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.28), 7, Paint()..color = const Color(0xFFF4C7CF));
+    canvas.drawPath(pad, Paint()..color = isError ? AppColors.borderStrong : AppColors.lilyPad);
+    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.28), 7, Paint()..color = AppColors.lilyFlower);
     canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.28), 3, Paint()..color = AppColors.gold);
   }
 

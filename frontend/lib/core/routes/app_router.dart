@@ -1,19 +1,27 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../storage/token_storage.dart';
+import 'app_routes.dart';
 import 'redirect_path.dart';
 import '../../features/auth/presentation/views/access_key_page.dart';
 import '../../features/home/presentation/views/home_page.dart';
+import '../../features/documents/presentation/bloc/weekly_documents_bloc.dart';
 import '../../features/documents/presentation/views/weekly_documents_page.dart';
-import '../../features/weekly_docs/presentation/user/weeks_screen.dart';
-import '../../features/weekly_docs/presentation/user/doc_reader_screen.dart';
-import '../../features/weekly_docs/presentation/admin/admin_docs_screen.dart';
-import '../../features/weekly_docs/presentation/admin/doc_creator_screen.dart';
-import '../../features/weekly_docs/data/weekly_docs_repository_provider.dart';
+import '../../features/weekly_docs/presentation/cubits/doc_complete_cubit.dart';
+import '../../features/weekly_docs/presentation/pages/admin_docs_page.dart';
+import '../../features/weekly_docs/presentation/pages/doc_complete_page.dart';
+import '../../features/weekly_docs/presentation/pages/doc_creator_page.dart';
+import '../../features/weekly_docs/presentation/pages/doc_reader_page.dart';
+import '../../features/weekly_docs/presentation/pages/weeks_page.dart';
 import '../../features/documents/presentation/views/document_detail_page.dart';
 import '../../features/documents/presentation/views/lesson_detail_page.dart';
+import '../../features/search/presentation/bloc/search_bloc.dart';
 import '../../features/search/presentation/views/search_page.dart';
+import '../../features/wordbook/presentation/bloc/wordbook_bloc.dart';
 import '../../features/wordbook/presentation/views/wordbook_page.dart';
+import '../../features/web_resources/presentation/bloc/web_resources_bloc.dart';
 import '../../features/web_resources/presentation/views/web_resources_page.dart';
+import '../../features/admin/documents/presentation/bloc/admin_documents_bloc.dart';
 import '../../features/admin/documents/presentation/views/admin_documents_page.dart';
 import '../../features/admin/documents/presentation/views/document_form_page.dart';
 import '../../features/admin/vocabularies/presentation/views/admin_vocabularies_page.dart';
@@ -26,141 +34,175 @@ import '../../core/widgets/app_layout.dart';
 
 final _tokenStorage = TokenStorage();
 
+/// Trang cấp tab (con trực tiếp của ShellRoute): đổi tab là thay hẳn trang nên hiện ngay, không trượt /
+/// mờ dần — hiệu ứng chuyển trang mặc định để lộ trang cũ trong lúc chạy. Trang con lồng bên dưới
+/// (đọc tài liệu, màn soạn…) vẫn giữ hiệu ứng mở trang bình thường.
+GoRouterPageBuilder _tabPage(GoRouterWidgetBuilder builder) =>
+    (context, state) => NoTransitionPage<void>(key: state.pageKey, child: builder(context, state));
+
+/// Router duy nhất của app: URL quyết định trang hiển thị (kể cả khi mở link hoặc F5).
+/// Trang cần Bloc thì tạo provider ngay tại route, để mở thẳng bằng URL vẫn chạy.
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/access',
+  initialLocation: AppRoutes.access,
   redirect: (context, state) async {
     final isLoggedIn = await _tokenStorage.isLoggedIn();
-    final isGoingToAccess = state.matchedLocation == '/access';
+    final isGoingToAccess = state.matchedLocation == AppRoutes.access;
 
     if (!isLoggedIn && !isGoingToAccess) {
       // Giữ trang đang mở để đăng nhập xong quay lại đúng chỗ.
       return accessPathFor(state.uri.toString());
     }
     if (isLoggedIn && isGoingToAccess) {
-      return safeRedirectPath(state.uri.queryParameters['from']) ?? '/home';
+      return safeRedirectPath(state.uri.queryParameters['from']) ?? AppRoutes.home;
     }
     return null;
   },
   routes: [
     GoRoute(
-      path: '/access',
+      path: AppRoutes.access,
       builder: (context, state) => const AccessKeyPage(),
     ),
     ShellRoute(
-      builder: (context, state, child) => AppLayout(child: child),
+      builder: (context, state, child) => AppLayout(location: state.uri.path, child: child),
       routes: [
         GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomePage(),
+          path: AppRoutes.home,
+          pageBuilder: _tabPage((context, state) => const HomePage()),
         ),
         GoRoute(
-          path: '/resources',
-          builder: (context, state) => const WebResourcesPage(),
+          path: AppRoutes.resources,
+          pageBuilder: _tabPage(
+            (context, state) => BlocProvider(
+              create: (_) => WebResourcesBloc()..add(LoadResources()),
+              child: const WebResourcesPage(),
+            ),
+          ),
         ),
         GoRoute(
-          path: '/weekly',
-          builder: (context, state) => WeeksScreen(repo: weeklyDocsRepo),
+          path: AppRoutes.weekly,
+          pageBuilder: _tabPage((context, state) => const WeeksPage()),
+          routes: [
+            GoRoute(
+              path: AppRoutes.weeklyDocSegment,
+              builder: (context, state) => DocReaderPage(docId: state.pathParameters['id'] ?? ''),
+              routes: [
+                GoRoute(
+                  path: AppRoutes.weeklyDocDoneSegment,
+                  // Kết quả hoàn thành chỉ có ngay sau khi bấm "Hoàn thành" (truyền qua extra);
+                  // mở lại bằng URL / F5 thì về tài liệu.
+                  redirect: (context, state) =>
+                      state.extra is DocCompleteArgs ? null : AppRoutes.weeklyDoc(state.pathParameters['id'] ?? ''),
+                  builder: (context, state) => switch (state.extra) {
+                    final DocCompleteArgs args => DocCompletePage(args: args),
+                    _ => DocReaderPage(docId: state.pathParameters['id'] ?? ''),
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
-          path: '/weekly/doc/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return DocReaderScreen(repo: weeklyDocsRepo, docId: id);
-          },
+          path: AppRoutes.lessonPattern,
+          pageBuilder: _tabPage((context, state) => LessonDetailPage(lessonId: state.pathParameters['id'] ?? '')),
         ),
         GoRoute(
-          path: '/lessons/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return LessonDetailPage(lessonId: id);
-          },
+          path: AppRoutes.documentPattern,
+          pageBuilder: _tabPage((context, state) => DocumentDetailPage(documentId: state.pathParameters['id'] ?? '')),
         ),
         GoRoute(
-          path: '/documents/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return DocumentDetailPage(documentId: id);
-          },
+          path: AppRoutes.articles,
+          pageBuilder: _tabPage(
+            (context, state) => BlocProvider(
+              create: (_) => WeeklyDocumentsBloc(),
+              child: const WeeklyDocumentsPage(),
+            ),
+          ),
         ),
         GoRoute(
-          path: '/articles',
-          builder: (context, state) => const WeeklyDocumentsPage(),
+          path: AppRoutes.wordbook,
+          pageBuilder: _tabPage(
+            (context, state) => BlocProvider(
+              create: (_) => WordbookBloc()..add(LoadWordbook()),
+              child: const WordbookPage(),
+            ),
+          ),
         ),
         GoRoute(
-          path: '/wordbook',
-          builder: (context, state) => const WordbookPage(),
+          path: AppRoutes.search,
+          pageBuilder: _tabPage(
+            (context, state) => BlocProvider(
+              create: (_) => SearchBloc(),
+              child: const SearchPage(),
+            ),
+          ),
         ),
         GoRoute(
-          path: '/search',
-          builder: (context, state) => const SearchPage(),
+          path: AppRoutes.admin,
+          pageBuilder: _tabPage(
+            (context, state) => BlocProvider(
+              create: (_) => AdminDocumentsBloc()..add(LoadAdminDocuments()),
+              child: const AdminDocumentsPage(),
+            ),
+          ),
         ),
         GoRoute(
-          path: '/admin',
-          builder: (context, state) => const AdminDocumentsPage(),
+          path: AppRoutes.adminDocumentCreate,
+          pageBuilder: _tabPage((context, state) => const DocumentFormPage()),
         ),
         GoRoute(
-          path: '/admin/documents/create',
-          builder: (context, state) => const DocumentFormPage(),
+          path: AppRoutes.adminDocumentEditPattern,
+          pageBuilder: _tabPage((context, state) => DocumentFormPage(documentId: state.pathParameters['id'] ?? '')),
         ),
         GoRoute(
-          path: '/admin/documents/:id/edit',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return DocumentFormPage(documentId: id);
-          },
+          path: AppRoutes.adminVocabularies,
+          pageBuilder: _tabPage((context, state) => const AdminVocabulariesPage()),
         ),
         GoRoute(
-          path: '/admin/vocabularies',
-          builder: (context, state) => const AdminVocabulariesPage(),
+          path: AppRoutes.adminVocabularyCreate,
+          pageBuilder: _tabPage((context, state) => const VocabularyFormPage()),
         ),
         GoRoute(
-          path: '/admin/vocabularies/create',
-          builder: (context, state) => const VocabularyFormPage(),
+          path: AppRoutes.adminVocabularyEditPattern,
+          pageBuilder: _tabPage((context, state) => VocabularyFormPage(vocabularyId: state.pathParameters['id'] ?? '')),
         ),
         GoRoute(
-          path: '/admin/vocabularies/:id/edit',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return VocabularyFormPage(vocabularyId: id);
-          },
+          path: AppRoutes.adminSentencePatterns,
+          pageBuilder: _tabPage((context, state) => const AdminSentencePatternsPage()),
         ),
         GoRoute(
-          path: '/admin/sentence-patterns',
-          builder: (context, state) => const AdminSentencePatternsPage(),
+          path: AppRoutes.adminSentencePatternCreate,
+          pageBuilder: _tabPage((context, state) => const SentencePatternFormPage()),
         ),
         GoRoute(
-          path: '/admin/sentence-patterns/create',
-          builder: (context, state) => const SentencePatternFormPage(),
+          path: AppRoutes.adminSentencePatternEditPattern,
+          pageBuilder: _tabPage((context, state) => SentencePatternFormPage(sentencePatternId: state.pathParameters['id'] ?? '')),
         ),
         GoRoute(
-          path: '/admin/sentence-patterns/:id/edit',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return SentencePatternFormPage(sentencePatternId: id);
-          },
+          path: AppRoutes.adminTags,
+          pageBuilder: _tabPage((context, state) => const AdminTagsPage()),
         ),
         GoRoute(
-          path: '/admin/tags',
-          builder: (context, state) => const AdminTagsPage(),
+          path: AppRoutes.adminAccessKeys,
+          pageBuilder: _tabPage((context, state) => const AdminAccessKeysPage()),
         ),
         GoRoute(
-          path: '/admin/access-keys',
-          builder: (context, state) => const AdminAccessKeysPage(),
-        ),
-        GoRoute(
-          path: '/admin/weekly-docs',
-          builder: (context, state) => AdminDocsScreen(repo: weeklyDocsRepo),
-        ),
-        GoRoute(
-          path: '/admin/weekly-docs/create',
-          builder: (context, state) => DocCreatorScreen(repo: weeklyDocsRepo, initialWeek: weeklyDocsRepo.currentWeekNumber),
-        ),
-        GoRoute(
-          path: '/admin/weekly-docs/:id/edit',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return DocCreatorScreen(repo: weeklyDocsRepo, docId: id, initialWeek: weeklyDocsRepo.currentWeekNumber);
-          },
+          path: AppRoutes.adminWeeklyDocs,
+          pageBuilder: _tabPage((context, state) => const AdminDocsPage()),
+          routes: [
+            GoRoute(
+              path: AppRoutes.adminWeeklyDocCreateSegment,
+              // Không có ?week thì màn soạn tự chọn tuần hiện tại.
+              builder: (context, state) => DocCreatorPage(initialWeek: int.tryParse(state.uri.queryParameters['week'] ?? '') ?? 0),
+            ),
+            GoRoute(
+              path: AppRoutes.adminWeeklyDocEditSegment,
+              builder: (context, state) => DocCreatorPage(docId: state.pathParameters['id']),
+            ),
+            GoRoute(
+              path: AppRoutes.adminWeeklyDocPreviewSegment,
+              builder: (context, state) => DocReaderPage(docId: state.pathParameters['id'] ?? '', isAdminPreview: true),
+            ),
+          ],
         ),
       ],
     ),

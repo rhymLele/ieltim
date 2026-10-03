@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_tokens.dart';
-import '../../domain/weekly_doc.dart';
+import '../../domain/entities/weekly_doc.dart';
 import 'block_view.dart';
 import 'common_widgets.dart';
 
@@ -34,7 +34,7 @@ class DocContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final children = <Widget>[];
     if (showTitle) {
-      children.add(Text(doc.title, style: TextStyle(fontSize: scale.heading + 4, fontWeight: FontWeight.w800, letterSpacing: -0.4, color: AppColors.text)));
+      children.add(Text(doc.title, style: TextStyle(fontSize: scale.heading + 4, fontWeight: FontWeight.w800, letterSpacing: -0.4, color: AppColors.textInk)));
     }
     for (var si = 0; si < doc.sections.length; si++) {
       if (children.isNotEmpty) children.add(SizedBox(height: sectionGap));
@@ -173,8 +173,8 @@ class RoundNavButton extends StatelessWidget {
       child: Opacity(
         opacity: onPressed == null ? 0.4 : 1,
         child: Material(
-          color: filled ? AppColors.primary : AppColors.surface,
-          shape: CircleBorder(side: filled ? BorderSide.none : const BorderSide(color: AppColors.border)),
+          color: filled ? AppColors.primary : AppColors.cardSurface,
+          shape: CircleBorder(side: filled ? BorderSide.none : const BorderSide(color: AppColors.borderLight)),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onPressed,

@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/core/di/service_locator.dart';
+import 'package:frontend/core/services/logger_service.dart';
+import 'package:frontend/core/services/tts_service.dart';
 import 'package:frontend/core/widgets/word_of_day_card.dart';
 
 void main() {
+  // Bấm loa trong test: flutter_tts không có plugin → lỗi được ghi qua LoggerService.
+  setUpAll(() {
+    registerSingleton<LoggerService>(LoggerService());
+    registerSingleton<TtsService>(TtsService());
+  });
+  tearDownAll(resetSingletons);
+
   for (final reduceMotion in [false, true]) {
     testWidgets(
       'card toggles both ways; saving does not flip (reduce motion: $reduceMotion)',

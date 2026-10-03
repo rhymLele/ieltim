@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend/features/weekly_docs/domain/doc_validator.dart';
-import 'package:frontend/features/weekly_docs/domain/html_file.dart';
-import 'package:frontend/features/weekly_docs/domain/weekly_doc.dart';
+import 'package:frontend/features/weekly_docs/domain/rules/doc_validator.dart';
+import 'package:frontend/features/weekly_docs/domain/rules/html_file.dart';
+import 'package:frontend/features/weekly_docs/domain/entities/weekly_doc.dart';
 import 'package:frontend/features/weekly_docs/presentation/widgets/html_frame_io.dart';
 
 Uint8List _bytes(String s) => Uint8List.fromList(utf8.encode(s));

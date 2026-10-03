@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_tokens.dart';
-import '../../domain/weekly_doc.dart';
+import '../../domain/entities/weekly_doc.dart';
 
 /// Cỡ chữ / khoảng cách theo ngữ cảnh hiển thị (bảng mục 6 file 5).
 class BlockScale {
@@ -41,15 +41,7 @@ class QuizState {
 }
 
 class BlockView extends StatelessWidget {
-  const BlockView({
-    super.key,
-    required this.block,
-    required this.blockKey,
-    required this.scale,
-    this.quiz = const QuizState(),
-    this.highlighted = false,
-    this.trailingForVocab,
-  });
+  const BlockView({super.key, required this.block, required this.blockKey, required this.scale, this.quiz = const QuizState(), this.highlighted = false, this.trailingForVocab});
 
   final DocBlock block;
   final String blockKey;
@@ -65,8 +57,14 @@ class BlockView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = switch (block) {
-      HeadingBlock b => Text(b.text, style: TextStyle(fontSize: scale.heading, height: 1.2, fontWeight: FontWeight.w800, letterSpacing: -0.02 * scale.heading, color: AppColors.text)),
-      ParagraphBlock b => RichTextLite(b.text, style: TextStyle(fontSize: scale.body, height: 1.6, color: AppColors.text)),
+      HeadingBlock b => Text(
+        b.text,
+        style: TextStyle(fontSize: scale.heading, height: 1.2, fontWeight: FontWeight.w800, letterSpacing: -0.02 * scale.heading, color: AppColors.textInk),
+      ),
+      ParagraphBlock b => RichTextLite(
+        b.text,
+        style: TextStyle(fontSize: scale.body, height: 1.6, color: AppColors.textInk),
+      ),
       CalloutBlock b => _Callout(block: b, scale: scale),
       StepsBlock b => _Steps(block: b, scale: scale),
       PassageBlock b => _Passage(block: b, scale: scale),
@@ -83,8 +81,8 @@ class BlockView extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: const [
-          BoxShadow(color: Color(0xE6E7A23B), spreadRadius: 2),
-          BoxShadow(color: Color(0x2EE7A23B), spreadRadius: 5),
+          BoxShadow(color: AppColors.highlightRing, spreadRadius: 2),
+          BoxShadow(color: AppColors.highlightGlow, spreadRadius: 5),
         ],
       ),
       child: child,
@@ -109,12 +107,27 @@ class RichTextLite extends StatelessWidget {
     for (final m in _re.allMatches(text)) {
       if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
       if (m.group(1) != null) {
-        spans.add(TextSpan(text: m.group(1), style: TextStyle(fontWeight: FontWeight.w800, color: boldColor)));
+        spans.add(
+          TextSpan(
+            text: m.group(1),
+            style: TextStyle(fontWeight: FontWeight.w800, color: boldColor),
+          ),
+        );
       } else if (m.group(2) != null) {
-        spans.add(TextSpan(text: m.group(2), style: const TextStyle(fontStyle: FontStyle.italic)));
+        spans.add(
+          TextSpan(
+            text: m.group(2),
+            style: const TextStyle(fontStyle: FontStyle.italic),
+          ),
+        );
       } else {
         // Link: hiển thị gạch chân. Mở link bằng url_launcher ở tầng app nếu cần.
-        spans.add(TextSpan(text: m.group(3), style: TextStyle(color: boldColor, decoration: TextDecoration.underline)));
+        spans.add(
+          TextSpan(
+            text: m.group(3),
+            style: TextStyle(color: boldColor, decoration: TextDecoration.underline),
+          ),
+        );
       }
       last = m.end;
     }
@@ -137,7 +150,7 @@ class _Callout extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, icon, label) = switch (block.tone) {
       'warning' => (AppColors.errorBg, AppColors.primary, Icons.warning_amber_rounded, 'Lưu ý: '),
-      'note' => (AppColors.sidebar, AppColors.text, Icons.info_outline_rounded, 'Ghi chú: '),
+      'note' => (AppColors.sidebar, AppColors.textInk, Icons.info_outline_rounded, 'Ghi chú: '),
       _ => (AppColors.tipBg, AppColors.tipText, Icons.lightbulb_outline_rounded, 'Mẹo: '),
     };
     return Container(
@@ -146,13 +159,22 @@ class _Callout extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(icon, size: scale.body + 4, color: block.tone == 'tip' ? AppColors.tipIcon : fg)),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: scale.body + 4, color: block.tone == 'tip' ? AppColors.tipIcon : fg),
+          ),
           SizedBox(width: scale.body * 0.75),
           Expanded(
             child: Text.rich(
               TextSpan(
                 style: TextStyle(fontSize: scale.body * 0.95, height: 1.55, color: fg),
-                children: [TextSpan(text: label, style: const TextStyle(fontWeight: FontWeight.w800)), ...RichTextLite.parse(block.text, const TextStyle(), fg)],
+                children: [
+                  TextSpan(
+                    text: label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  ...RichTextLite.parse(block.text, const TextStyle(), fg),
+                ],
               ),
             ),
           ),
@@ -184,13 +206,19 @@ class _Steps extends StatelessWidget {
                   height: box,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(color: AppColors.sidebar, borderRadius: BorderRadius.circular(box * 0.3)),
-                  child: Text('${i + 1}', style: TextStyle(color: AppColors.primary, fontSize: scale.body * 0.85, fontWeight: FontWeight.w800)),
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(color: AppColors.primary, fontSize: scale.body * 0.85, fontWeight: FontWeight.w800),
+                  ),
                 ),
                 SizedBox(width: scale.body * 0.7),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: RichTextLite(block.items[i], style: TextStyle(fontSize: scale.body, height: 1.5, color: AppColors.text)),
+                    child: RichTextLite(
+                      block.items[i],
+                      style: TextStyle(fontSize: scale.body, height: 1.5, color: AppColors.textInk),
+                    ),
                   ),
                 ),
               ],
@@ -211,15 +239,25 @@ class _Passage extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: scale.body * 1.1, vertical: scale.body),
-      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.borderLight),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (block.label != null) ...[
-            Text(block.label!.toUpperCase(), style: TextStyle(color: AppColors.primary, fontSize: scale.eyebrow, fontWeight: FontWeight.w800, letterSpacing: scale.eyebrow * 0.12)),
+            Text(
+              block.label!.toUpperCase(),
+              style: TextStyle(color: AppColors.primary, fontSize: scale.eyebrow, fontWeight: FontWeight.w800, letterSpacing: scale.eyebrow * 0.12),
+            ),
             SizedBox(height: scale.gap * 0.45),
           ],
-          Text(block.text, style: TextStyle(fontFamily: AppText.serif, fontSize: scale.body, height: 1.65, color: AppColors.text)),
+          Text(
+            block.text,
+            style: TextStyle(fontFamily: AppText.serif, fontSize: scale.body, height: 1.65, color: AppColors.textInk),
+          ),
         ],
       ),
     );
@@ -241,12 +279,15 @@ class _Quiz extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(block.question, style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.text)),
+        Text(
+          block.question,
+          style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.textInk),
+        ),
         SizedBox(height: scale.gap * 0.6),
         for (var i = 0; i < block.options.length; i++)
           Padding(
             padding: EdgeInsets.only(bottom: scale.gap * 0.5),
-            child: _option(i, chosen, answered),
+            child: _QuizOption(block: block, blockKey: blockKey, index: i, chosen: chosen, scale: scale, state: state),
           ),
         if (answered && block.explain != null)
           AnimatedSwitcher(
@@ -257,9 +298,12 @@ class _Quiz extends StatelessWidget {
               decoration: BoxDecoration(color: right ? AppColors.successBg : AppColors.errorBg, borderRadius: BorderRadius.circular(AppRadius.md)),
               child: Text.rich(
                 TextSpan(
-                  style: TextStyle(fontSize: scale.small, height: 1.55, color: AppColors.text),
+                  style: TextStyle(fontSize: scale.small, height: 1.55, color: AppColors.textInk),
                   children: [
-                    TextSpan(text: right ? 'Chính xác! ' : 'Chưa đúng. ', style: TextStyle(fontWeight: FontWeight.w800, color: right ? AppColors.success : AppColors.primary)),
+                    TextSpan(
+                      text: right ? 'Chính xác! ' : 'Chưa đúng. ',
+                      style: TextStyle(fontWeight: FontWeight.w800, color: right ? AppColors.success : AppColors.primary),
+                    ),
                     TextSpan(text: block.explain),
                   ],
                 ),
@@ -269,15 +313,30 @@ class _Quiz extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _option(int i, int? chosen, bool answered) {
+/// Một đáp án của câu trắc nghiệm: tô xanh đáp án đúng, đỏ lựa chọn sai.
+class _QuizOption extends StatelessWidget {
+  const _QuizOption({required this.block, required this.blockKey, required this.index, required this.chosen, required this.scale, required this.state});
+  final QuizBlock block;
+  final String blockKey;
+  final int index;
+  final int? chosen;
+  final BlockScale scale;
+  final QuizState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final i = index;
+    final answered = chosen != null;
+    final onAnswer = state.onAnswer;
     final isAnswer = i == block.answer;
     final good = (answered || state.revealAnswer) && isAnswer;
     final bad = answered && i == chosen && !isAnswer;
-    final bg = good ? AppColors.successBg : (bad ? AppColors.errorBg : AppColors.surface);
-    final border = good ? AppColors.success : (bad ? AppColors.primary : AppColors.border);
+    final bg = good ? AppColors.successBg : (bad ? AppColors.errorBg : AppColors.cardSurface);
+    final border = good ? AppColors.success : (bad ? AppColors.primary : AppColors.borderLight);
     final badgeBg = good ? AppColors.success : (bad ? AppColors.primary : AppColors.sidebar);
-    final badgeFg = good || bad ? Colors.white : AppColors.primary;
+    final badgeFg = good || bad ? AppColors.white : AppColors.primary;
     final mark = answered ? (good ? 'Đáp án' : (bad ? 'Bạn chọn' : null)) : null;
     final badge = scale.body * 1.7;
     return Semantics(
@@ -287,10 +346,13 @@ class _Quiz extends StatelessWidget {
       excludeSemantics: true,
       child: Material(
         color: bg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg), side: BorderSide(color: border, width: 1.5)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: border, width: 1.5),
+        ),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: state.onAnswer == null ? null : () => state.onAnswer!(blockKey, i),
+          onTap: onAnswer == null ? null : () => onAnswer(blockKey, i),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: scale.body >= 14 ? 48 : 30),
             child: Padding(
@@ -302,11 +364,23 @@ class _Quiz extends StatelessWidget {
                     height: badge,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: badgeBg, shape: BoxShape.circle),
-                    child: Text(romanKeys.length > i ? romanKeys[i] : '${i + 1}', style: TextStyle(color: badgeFg, fontSize: scale.body * 0.75, fontWeight: FontWeight.w800)),
+                    child: Text(
+                      romanKeys.length > i ? romanKeys[i] : '${i + 1}',
+                      style: TextStyle(color: badgeFg, fontSize: scale.body * 0.75, fontWeight: FontWeight.w800),
+                    ),
                   ),
                   SizedBox(width: scale.body * 0.7),
-                  Expanded(child: Text(block.options[i], style: TextStyle(fontSize: scale.body * 0.95, color: AppColors.text))),
-                  if (mark != null) Text(mark, style: TextStyle(fontSize: scale.small, fontWeight: FontWeight.w800, color: good ? AppColors.success : AppColors.primary)),
+                  Expanded(
+                    child: Text(
+                      block.options[i],
+                      style: TextStyle(fontSize: scale.body * 0.95, color: AppColors.textInk),
+                    ),
+                  ),
+                  if (mark != null)
+                    Text(
+                      mark,
+                      style: TextStyle(fontSize: scale.small, fontWeight: FontWeight.w800, color: good ? AppColors.success : AppColors.primary),
+                    ),
                 ],
               ),
             ),
@@ -326,17 +400,24 @@ class _Vocab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.borderLight),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (var i = 0; i < block.items.length; i++)
             Container(
               padding: EdgeInsets.symmetric(horizontal: scale.body, vertical: scale.body * 0.65),
-              decoration: BoxDecoration(border: i == 0 ? null : const Border(top: BorderSide(color: AppColors.border))),
+              decoration: BoxDecoration(
+                border: i == 0 ? null : const Border(top: BorderSide(color: AppColors.borderLight)),
+              ),
               child: Row(
                 children: [
-                  Expanded(child: scale.compactVocab ? _stacked(block.items[i]) : _columns(block.items[i])),
+                  Expanded(
+                    child: scale.compactVocab ? _VocabItemStacked(item: block.items[i], scale: scale) : _VocabItemColumns(item: block.items[i], scale: scale),
+                  ),
                   if (trailing != null) trailing!(block.items[i]),
                 ],
               ),
@@ -345,38 +426,91 @@ class _Vocab extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _stacked(VocabItem v) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.end,
-            spacing: 8,
-            children: [
-              Text(v.word, style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.primary)),
-              Text([v.pos, v.ipa].whereType<String>().join(' '), style: TextStyle(fontSize: scale.small - 1, color: AppColors.textMuted)),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(v.meaning, style: TextStyle(fontSize: scale.body * 0.93, color: AppColors.text)),
-        ],
-      );
+/// Từ vựng dạng xếp dọc (slide, màn hẹp).
+class _VocabItemStacked extends StatelessWidget {
+  const _VocabItemStacked({required this.item, required this.scale});
+  final VocabItem item;
+  final BlockScale scale;
 
-  Widget _columns(VocabItem v) => Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          SizedBox(
-            width: 150,
-            child: Text.rich(TextSpan(children: [
-              TextSpan(text: v.word, style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.primary)),
-              if (v.pos != null) TextSpan(text: '  ${v.pos}', style: TextStyle(fontSize: scale.small - 1, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-            ])),
+  @override
+  Widget build(BuildContext context) {
+    final v = item;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.end,
+          spacing: 8,
+          children: [
+            Text(
+              v.word,
+              style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.primary),
+            ),
+            Text(
+              [v.pos, v.ipa].whereType<String>().join(' '),
+              style: TextStyle(fontSize: scale.small - 1, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          v.meaning,
+          style: TextStyle(fontSize: scale.body * 0.93, color: AppColors.textInk),
+        ),
+      ],
+    );
+  }
+}
+
+/// Từ vựng dạng cột: từ · phiên âm · nghĩa (màn rộng).
+class _VocabItemColumns extends StatelessWidget {
+  const _VocabItemColumns({required this.item, required this.scale});
+  final VocabItem item;
+  final BlockScale scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = item;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        SizedBox(
+          width: 150,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: v.word,
+                  style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.primary),
+                ),
+                if (v.pos != null)
+                  TextSpan(
+                    text: '  ${v.pos}',
+                    style: TextStyle(fontSize: scale.small - 1, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                  ),
+              ],
+            ),
           ),
-          SizedBox(width: 130, child: Text(v.ipa ?? '', style: TextStyle(fontSize: scale.small, color: AppColors.textMuted))),
-          Expanded(child: Text(v.meaning, style: TextStyle(fontSize: scale.body, color: AppColors.text))),
-        ],
-      );
+        ),
+        SizedBox(
+          width: 130,
+          child: Text(
+            v.ipa ?? '',
+            style: TextStyle(fontSize: scale.small, color: AppColors.textMuted),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            v.meaning,
+            style: TextStyle(fontSize: scale.body, color: AppColors.textInk),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _Pattern extends StatelessWidget {
@@ -393,12 +527,21 @@ class _Pattern extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('MẪU CÂU', style: TextStyle(fontSize: scale.eyebrow - 1, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: AppColors.softOnPrimary)),
+          Text(
+            'MẪU CÂU',
+            style: TextStyle(fontSize: scale.eyebrow - 1, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: AppColors.softOnPrimary),
+          ),
           SizedBox(height: scale.gap * 0.3),
-          Text(block.structure, style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.onPrimary)),
+          Text(
+            block.structure,
+            style: TextStyle(fontSize: scale.body, fontWeight: FontWeight.w800, color: AppColors.onPrimary),
+          ),
           if (block.example != null) ...[
             const SizedBox(height: 2),
-            Text(block.example!, style: TextStyle(fontSize: scale.small, fontStyle: FontStyle.italic, color: AppColors.softOnPrimary)),
+            Text(
+              block.example!,
+              style: TextStyle(fontSize: scale.small, fontStyle: FontStyle.italic, color: AppColors.softOnPrimary),
+            ),
           ],
         ],
       ),
@@ -423,33 +566,45 @@ class _Image extends StatelessWidget {
               ? GestureDetector(
                   onTap: () => showDialog<void>(
                     context: context,
-                    builder: (_) => Dialog(child: InteractiveViewer(child: Image.network(block.url, semanticLabel: block.alt))),
+                    builder: (_) => Dialog(
+                      child: InteractiveViewer(child: Image.network(block.url, semanticLabel: block.alt)),
+                    ),
                   ),
                   child: Image.network(
                     block.url,
                     semanticLabel: block.alt,
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    errorBuilder: (_, __, ___) => _placeholder(),
-                    loadingBuilder: (c, child, p) => p == null ? child : _placeholder(),
+                    errorBuilder: (_, _, _) => _ImagePlaceholder(scale: scale),
+                    loadingBuilder: (c, child, p) => p == null ? child : _ImagePlaceholder(scale: scale),
                   ),
                 )
-              : _placeholder(),
+              : _ImagePlaceholder(scale: scale),
         ),
         if ((block.caption ?? '').isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text(block.caption!, style: TextStyle(fontSize: scale.small, color: AppColors.textMuted)),
+          Text(
+            block.caption!,
+            style: TextStyle(fontSize: scale.small, color: AppColors.textMuted),
+          ),
         ],
       ],
     );
   }
+}
 
-  Widget _placeholder() => Container(
-        height: scale.body * 10,
-        color: AppColors.sidebar,
-        alignment: Alignment.center,
-        child: const Icon(Icons.image_outlined, color: AppColors.textMuted),
-      );
+/// Khung xám khi ảnh đang tải, lỗi hoặc chưa có link.
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder({required this.scale});
+  final BlockScale scale;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: scale.body * 10,
+    color: AppColors.sidebar,
+    alignment: Alignment.center,
+    child: const Icon(Icons.image_outlined, color: AppColors.textMuted),
+  );
 }
 
 class _Unknown extends StatelessWidget {
@@ -458,9 +613,12 @@ class _Unknown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpace.md),
-        decoration: BoxDecoration(color: AppColors.archivedBg, borderRadius: BorderRadius.circular(AppRadius.md)),
-        child: Text('Nội dung chưa hỗ trợ, hãy cập nhật app', style: TextStyle(fontSize: scale.small, color: AppColors.textMuted)),
-      );
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpace.md),
+    decoration: BoxDecoration(color: AppColors.archivedBg, borderRadius: BorderRadius.circular(AppRadius.md)),
+    child: Text(
+      'Nội dung chưa hỗ trợ, hãy cập nhật app',
+      style: TextStyle(fontSize: scale.small, color: AppColors.textMuted),
+    ),
+  );
 }
