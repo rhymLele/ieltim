@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_tokens.dart';
+import '../../../domain/entities/doc_category.dart';
 import '../../../domain/entities/doc_status.dart';
 import '../../../domain/entities/week_info.dart';
 
-/// Hàng lọc: tuần · trạng thái · tìm theo tiêu đề.
+/// Hàng lọc: tuần · loại (Tài liệu / Bài tập) · trạng thái · tìm theo tiêu đề.
 class AdminDocsToolbar extends StatelessWidget {
   const AdminDocsToolbar({
     super.key,
     required this.weeks,
     required this.week,
     required this.statuses,
+    required this.categories,
     required this.onWeekChanged,
     required this.onStatusToggled,
+    required this.onCategoryToggled,
     required this.onQueryChanged,
   });
 
   final List<WeekInfo> weeks;
   final int? week;
   final Set<DocStatus> statuses;
+  final Set<DocCategory> categories;
   final ValueChanged<int?> onWeekChanged;
   final void Function(DocStatus status, bool selected) onStatusToggled;
+  final void Function(DocCategory category, bool selected) onCategoryToggled;
   final ValueChanged<String> onQueryChanged;
 
   @override
@@ -31,7 +36,21 @@ class AdminDocsToolbar extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _WeekDropdown(weeks: weeks, value: week, onChanged: onWeekChanged),
-        for (final s in DocStatus.values) _StatusChip(status: s, selected: statuses.contains(s), onSelected: (v) => onStatusToggled(s, v)),
+        for (final c in DocCategory.values)
+          _FilterPill(
+            key: Key('weekly_docs_admin_category_${c.name}_chip'),
+            label: c.label,
+            selected: categories.contains(c),
+            onSelected: (v) => onCategoryToggled(c, v),
+          ),
+        const SizedBox(height: 24, child: VerticalDivider(width: AppSpace.sm, color: AppColors.borderStrong)),
+        for (final s in DocStatus.values)
+          _FilterPill(
+            key: Key('weekly_docs_admin_status_${s.name}_chip'),
+            label: s.label,
+            selected: statuses.contains(s),
+            onSelected: (v) => onStatusToggled(s, v),
+          ),
         SizedBox(
           width: 240,
           child: TextField(
@@ -76,18 +95,17 @@ class _WeekDropdown extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status, required this.selected, required this.onSelected});
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({super.key, required this.label, required this.selected, required this.onSelected});
 
-  final DocStatus status;
+  final String label;
   final bool selected;
   final ValueChanged<bool> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return FilterChip(
-      key: Key('weekly_docs_admin_status_${status.name}_chip'),
-      label: Text(status.label),
+      label: Text(label),
       selected: selected,
       onSelected: onSelected,
       selectedColor: AppColors.primary,

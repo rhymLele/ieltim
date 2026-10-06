@@ -30,9 +30,12 @@ class VocabFromDocRequest {
 
 @JsonSerializable(createFactory: false)
 class CreateDraftRequest {
-  const CreateDraftRequest({required this.week, required this.order, required this.content});
+  const CreateDraftRequest({required this.week, required this.order, required this.category, required this.content});
   final int week;
   final int order;
+
+  /// `lesson` | `homework`.
+  final String category;
   @DocJsonConverter()
   final DocJson content;
   Map<String, dynamic> toJson() => _$CreateDraftRequestToJson(this);

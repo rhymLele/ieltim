@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../core/app_tokens.dart';
+import '../../domain/entities/doc_category.dart';
 import '../cubits/doc_creator_cubit.dart';
 import '../cubits/ui_state.dart';
 import '../widgets/common_widgets.dart';
@@ -19,7 +20,7 @@ import '../widgets/creator/step_publish.dart';
 import '../widgets/creator/step_template.dart';
 
 class DocCreatorPage extends StatelessWidget {
-  const DocCreatorPage({super.key, this.docId, this.initialWeek = 0});
+  const DocCreatorPage({super.key, this.docId, this.initialWeek = 0, this.initialCategory = DocCategory.lesson});
 
   /// null = tạo mới; có giá trị = sửa (mở ở bước 2).
   final String? docId;
@@ -27,10 +28,13 @@ class DocCreatorPage extends StatelessWidget {
   /// Tuần gợi ý khi tạo mới; 0 = tuần hiện tại.
   final int initialWeek;
 
+  /// Loại chọn sẵn khi tạo mới (đổi được ở bước 1).
+  final DocCategory initialCategory;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => DocCreatorCubit(docId: docId, initialWeek: initialWeek)..start(),
+      create: (_) => DocCreatorCubit(docId: docId, initialWeek: initialWeek, initialCategory: initialCategory)..start(),
       child: _DocCreatorView(isEditRoute: docId != null),
     );
   }
@@ -62,10 +66,11 @@ class _DocCreatorViewState extends State<_DocCreatorView> {
 
   void _forward() => _cubit.forward(jsonText: _cubit.state.jsonMode ? _jsonCtl.text : null);
 
-  /// "Tạo tài liệu N" sau khi xuất bản. Màn tạo mới vẫn ở cùng URL nên cubit tự làm lại từ đầu.
+  /// "Tạo tài liệu / bài tập N" sau khi xuất bản (cùng loại). Màn tạo mới vẫn ở cùng URL nên cubit tự làm lại từ đầu.
   void _createNext(int week) {
+    final homework = _cubit.state.category == DocCategory.homework;
     if (!widget.isEditRoute) _cubit.startOver(week);
-    context.go(AppRoutes.adminWeeklyDocCreate(week: week));
+    context.go(AppRoutes.adminWeeklyDocCreate(week: week, homework: homework));
   }
 
   Future<void> _onConflict(String message) async {

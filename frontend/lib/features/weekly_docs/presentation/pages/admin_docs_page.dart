@@ -47,9 +47,11 @@ class _AdminDocsView extends StatelessWidget {
   const _AdminDocsView();
 
   /// Màn soạn lồng dưới danh sách: đóng lại thì danh sách vẫn còn và tự tải lại sau mỗi lần lưu.
+  /// Đang lọc riêng bài tập thì màn tạo chọn sẵn loại Bài tập.
   void _openCreator(BuildContext context, {String? docId}) {
-    final week = context.read<AdminDocsCubit>().state.week;
-    context.go(docId == null ? AppRoutes.adminWeeklyDocCreate(week: week) : AppRoutes.adminWeeklyDocEdit(docId));
+    final state = context.read<AdminDocsCubit>().state;
+    final homeworkOnly = state.categories.length == 1 && state.categories.contains(DocCategory.homework);
+    context.go(docId == null ? AppRoutes.adminWeeklyDocCreate(week: state.week, homework: homeworkOnly) : AppRoutes.adminWeeklyDocEdit(docId));
   }
 
   Future<void> _onAction(BuildContext context, DocSummary doc, AdminDocAction action) async {
@@ -112,8 +114,10 @@ class _AdminDocsView extends StatelessWidget {
               weeks: state.weeks,
               week: state.week,
               statuses: state.statuses,
+              categories: state.categories,
               onWeekChanged: cubit.setWeek,
               onStatusToggled: (s, selected) => cubit.toggleStatus(s, selected: selected),
+              onCategoryToggled: (c, selected) => cubit.toggleCategory(c, selected: selected),
               onQueryChanged: cubit.setQuery,
             ),
             const SizedBox(height: AppSpace.lg),

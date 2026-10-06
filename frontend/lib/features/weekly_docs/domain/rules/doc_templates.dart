@@ -1,5 +1,7 @@
 // doc_templates.dart — Template tài liệu + khối mặc định + tài liệu mẫu.
 
+import '../entities/doc_category.dart';
+
 class DocTemplate {
   const DocTemplate({
     required this.id,
@@ -192,13 +194,15 @@ Map<String, dynamic> buildDocJson({
   required String title,
   required String templateId,
   required String skill,
+  DocCategory category = DocCategory.lesson,
 }) {
   final t = templateById(templateId);
   return deepCopyJson(<String, dynamic>{
     'schemaVersion': 1,
-    'id': 'w$week-doc$order',
+    'id': category.code(week, order),
     'week': week,
     'order': order,
+    'category': category.name,
     'title': title,
     'template': t.isImport ? 'custom' : t.id,
     'meta': {

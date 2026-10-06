@@ -37,7 +37,10 @@ class CreatorHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Admin › Theo tuần', style: AppText.caption),
-                Text(isEditRoute ? 'Sửa tài liệu' : 'Tạo tài liệu mới', style: AppText.heading),
+                Text(
+                  isEditRoute ? 'Sửa ${state.category.label.toLowerCase()}' : 'Tạo ${state.category.label.toLowerCase()} mới',
+                  style: AppText.heading,
+                ),
               ],
             ),
           ),

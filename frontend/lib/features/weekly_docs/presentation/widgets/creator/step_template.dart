@@ -61,10 +61,14 @@ class _StepTemplateState extends State<StepTemplate> {
           runSpacing: AppSpace.md,
           crossAxisAlignment: WrapCrossAlignment.end,
           children: [
+            _LabeledField(
+              label: 'Loại',
+              child: _CategoryChips(selected: state.category, enabled: !state.isEdit, onSelected: cubit.setCategory),
+            ),
             SizedBox(
               width: widget.wide ? 340 : double.infinity,
               child: _LabeledField(
-                label: 'Tên tài liệu',
+                label: 'Tên ${state.category.label.toLowerCase()}',
                 child: TextField(
                   key: const Key('weekly_docs_creator_title_field'),
                   controller: _titleCtl,
@@ -90,7 +94,7 @@ class _StepTemplateState extends State<StepTemplate> {
             SizedBox(
               width: 140,
               child: _LabeledField(
-                label: 'Tài liệu số',
+                label: '${state.category.label} số',
                 child: TextField(
                   key: const Key('weekly_docs_creator_order_field'),
                   controller: _orderCtl,
@@ -107,7 +111,7 @@ class _StepTemplateState extends State<StepTemplate> {
         ),
         if (state.isEdit) ...[
           const SizedBox(height: 6),
-          const Text('Tuần và số thứ tự không đổi được sau khi tạo. Muốn chuyển tuần, hãy dùng "Nhân bản".', style: AppText.caption),
+          const Text('Loại, tuần và số thứ tự không đổi được sau khi tạo. Muốn chuyển tuần, hãy dùng "Nhân bản".', style: AppText.caption),
         ],
         const SizedBox(height: AppSpace.xl),
         const Eyebrow('Chọn template'),
@@ -130,6 +134,39 @@ class _LabeledField extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [Text(label, style: AppText.label), const SizedBox(height: 6), child],
       );
+}
+
+/// Tài liệu / Bài tập (HOMEWORK). Đang sửa thì khoá (loại là một phần của mã tài liệu).
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({required this.selected, required this.enabled, required this.onSelected});
+
+  final DocCategory selected;
+  final bool enabled;
+  final ValueChanged<DocCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final c in DocCategory.values)
+          ChoiceChip(
+            key: Key('weekly_docs_creator_category_${c.name}_chip'),
+            label: Text(c == DocCategory.homework ? '${c.label} (HOMEWORK)' : c.label),
+            selected: selected == c,
+            onSelected: enabled ? (_) => onSelected(c) : null,
+            showCheckmark: false,
+            selectedColor: AppColors.primary,
+            disabledColor: selected == c ? AppColors.primary : AppColors.cardSurface,
+            backgroundColor: AppColors.cardSurface,
+            side: BorderSide(color: selected == c ? AppColors.primary : AppColors.borderStrong),
+            shape: const StadiumBorder(),
+            labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected == c ? AppColors.onPrimary : AppColors.textInk),
+          ),
+      ],
+    );
+  }
 }
 
 class _SkillChips extends StatelessWidget {

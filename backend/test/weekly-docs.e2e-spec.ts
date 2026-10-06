@@ -857,4 +857,97 @@ describe('Tài liệu theo tuần (e2e)', () => {
       ).toBe(true);
     });
   });
+
+  describe('Bài tập (HOMEWORK)', () => {
+    it('đánh số riêng với tài liệu: mã w{tuần}-hw{số}; trùng số cùng loại → 409', async () => {
+      const res = await admin
+        .post('/documents', {
+          week: 12,
+          category: 'homework',
+          title: 'Bài tập Reading tuần 12',
+          template: 'blank',
+        })
+        .expect(201);
+      expect(res.body.data).toMatchObject({
+        id: 'w12-hw1',
+        category: 'homework',
+        order: 1,
+        status: 'draft',
+      });
+      expect(res.body.data.content).toMatchObject({
+        id: 'w12-hw1',
+        category: 'homework',
+      });
+      const taken = await admin
+        .post('/documents', {
+          week: 12,
+          order: 1,
+          category: 'homework',
+          title: 'Trùng số',
+          template: 'blank',
+        })
+        .expect(409);
+      expect(taken.body).toMatchObject({
+        error: 'DOC_ORDER_TAKEN',
+        message: 'Tuần 12 đã có Bài tập 1.',
+        data: { suggestion: 2 },
+      });
+      // Tài liệu thường vẫn đánh số tiếp theo dãy của nó.
+      const lessons = (
+        await admin.get('/documents?week=12&category=lesson').expect(200)
+      ).body.data.data;
+      expect(
+        lessons.every((d: { category: string }) => d.category === 'lesson'),
+      ).toBe(true);
+      expect(
+        (await admin.get('/documents?week=12&category=homework').expect(200))
+          .body.data.data,
+      ).toEqual([expect.objectContaining({ id: 'w12-hw1' })]);
+    });
+
+    it('JSON import giữ category; xuất bản → người dùng thấy tài liệu trước, bài tập sau', async () => {
+      const lesson = (await admin.get('/documents/w12-doc1').expect(200)).body
+        .data.content;
+      const created = await admin
+        .post('/documents', {
+          week: 12,
+          content: {
+            ...lesson,
+            order: undefined, // không gửi số → lấy số kế tiếp của bài tập
+            title: 'Bài tập Matching Headings',
+            category: 'homework',
+          },
+        })
+        .expect(201);
+      expect(created.body.data).toMatchObject({
+        id: 'w12-hw2',
+        category: 'homework',
+      });
+      await admin.post('/documents/w12-hw2/publish').expect(201);
+
+      const list = (await user('b').get('/weeks/12/documents').expect(200)).body
+        .data as { id: string; category: string }[];
+      const firstHomework = list.findIndex((d) => d.category === 'homework');
+      expect(list[firstHomework].id).toBe('w12-hw2');
+      expect(
+        list.slice(firstHomework).every((d) => d.category === 'homework'),
+      ).toBe(true);
+      expect(
+        (await user('b').get('/documents/w12-hw2').expect(200)).body.data
+          .content,
+      ).toMatchObject({ id: 'w12-hw2', category: 'homework' });
+    });
+
+    it('nhân bản giữ loại bài tập, lấy số kế tiếp của bài tập ở tuần đích', async () => {
+      const res = await admin
+        .post('/documents/w12-hw2/duplicate', { targetWeek: 13 })
+        .expect(201);
+      expect(res.body.data).toMatchObject({
+        id: 'w13-hw1',
+        category: 'homework',
+        order: 1,
+        status: 'draft',
+      });
+    });
+  });
 });

@@ -44,6 +44,19 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
       }
     }
     _progress['w12-doc1'] = const DocProgress(seenSections: {0, 1}, lastSection: 1);
+
+    // Bài tập (HOMEWORK): đánh số riêng, mã w{tuần}-hw{số}.
+    final homework = buildDocJson(week: 12, order: 1, title: 'Bài tập: Viết mở bài Task 2', templateId: 'writing-task2', skill: 'writing', category: DocCategory.homework);
+    (homework['meta'] as Map<String, dynamic>)['defaultView'] = 'doc';
+    _docs.add(_FakeDoc(json: homework, status: DocStatus.published, publishedAt: today));
+    final pastHomework = deepCopyJson(sampleReadingDoc()) as Map<String, dynamic>
+      ..['id'] = DocCategory.homework.code(11, 1)
+      ..['week'] = 11
+      ..['order'] = 1
+      ..['category'] = DocCategory.homework.name
+      ..['title'] = 'Bài tập ôn Matching Headings';
+    _docs.add(_FakeDoc(json: pastHomework, status: DocStatus.published, publishedAt: today.subtract(const Duration(days: 7))));
+    _progress[DocCategory.homework.code(11, 1)] = DocProgress(seenSections: const {0, 1, 2, 3}, completed: true, completedAt: today.subtract(const Duration(days: 6)));
   }
 
   /// Độ trễ giả lập mạng.
@@ -146,7 +159,7 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
 
   @override
   Future<Result<List<DocSummary>>> getAdminDocs() => _run(() {
-        final sorted = [..._docs]..sort((a, b) => a.week != b.week ? b.week.compareTo(a.week) : a.order.compareTo(b.order));
+        final sorted = [..._docs]..sort(_byWeekDesc);
         return [for (final d in sorted) d.toSummary()];
       });
 
@@ -154,15 +167,16 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
   Future<Result<AdminDoc>> getAdminDoc(String id) => _run(() => _byId(id).toAdminDoc());
 
   @override
-  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocJson content}) => _run(() {
+  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocCategory category, required DocJson content}) => _run(() {
         _weekOrThrow(week);
-        if (_docs.any((d) => d.week == week && d.order == order)) {
-          throw ServerException('Tuần $week đã có Tài liệu $order.', code: 'DOC_ORDER_TAKEN', statusCode: 409);
+        if (_docs.any((d) => d.week == week && d.category == category && d.order == order)) {
+          throw ServerException('Tuần $week đã có ${category.label} $order.', code: 'DOC_ORDER_TAKEN', statusCode: 409);
         }
         final json = deepCopyJson(content.value) as Map<String, dynamic>
-          ..['id'] = 'w$week-doc$order'
+          ..['id'] = category.code(week, order)
           ..['week'] = week
-          ..['order'] = order;
+          ..['order'] = order
+          ..['category'] = category.name;
         final doc = _FakeDoc(json: json);
         _docs.add(doc);
         return _changed(doc);
@@ -237,8 +251,8 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
   @override
   Future<Result<AdminDoc>> undoDelete(String id) => _run(() {
         final doc = _deleted.lastWhere((d) => d.id == id, orElse: () => throw const ServerException('Không tìm thấy tài liệu.', code: 'DOC_NOT_FOUND'));
-        if (_docs.any((d) => d.week == doc.week && d.order == doc.order)) {
-          throw ServerException('Tuần ${doc.week} đã có Tài liệu ${doc.order}.', code: 'DOC_ORDER_TAKEN', statusCode: 409);
+        if (_docs.any((d) => d.week == doc.week && d.category == doc.category && d.order == doc.order)) {
+          throw ServerException('Tuần ${doc.week} đã có ${doc.category.label} ${doc.order}.', code: 'DOC_ORDER_TAKEN', statusCode: 409);
         }
         _deleted.remove(doc);
         _docs.add(doc);
@@ -249,12 +263,13 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
   Future<Result<AdminDoc>> duplicate(String id, {required int targetWeek}) => _run(() {
         final source = _byId(id);
         _weekOrThrow(targetWeek);
-        final orders = _docs.where((d) => d.week == targetWeek).map((d) => d.order);
+        // Giữ loại; số kế tiếp trong dãy cùng loại của tuần đích.
+        final orders = _docs.where((d) => d.week == targetWeek && d.category == source.category).map((d) => d.order);
         final order = orders.isEmpty ? 1 : orders.reduce((a, b) => a > b ? a : b) + 1;
         final json = deepCopyJson(source.json) as Map<String, dynamic>
           ..['week'] = targetWeek
           ..['order'] = order
-          ..['id'] = 'w$targetWeek-doc$order'
+          ..['id'] = source.category.code(targetWeek, order)
           ..['title'] = '${source.title} (bản sao)';
         final doc = _FakeDoc(json: json);
         _docs.add(doc);
@@ -302,8 +317,14 @@ class FakeWeeklyDocsRepository implements WeeklyDocsRepository {
     return doc;
   }
 
-  List<_FakeDoc> _published(int week) =>
-      _docs.where((d) => d.week == week && d.status == DocStatus.published).toList()..sort((a, b) => a.order.compareTo(b.order));
+  /// Tài liệu trước, bài tập sau; mỗi loại theo số thứ tự (như BE).
+  List<_FakeDoc> _published(int week) => _docs.where((d) => d.week == week && d.status == DocStatus.published).toList()..sort(_byWeekDesc);
+
+  static int _byWeekDesc(_FakeDoc a, _FakeDoc b) {
+    if (a.week != b.week) return b.week.compareTo(a.week);
+    if (a.category != b.category) return a.category.index.compareTo(b.category.index);
+    return a.order.compareTo(b.order);
+  }
 
   static String _hourMinute(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
@@ -321,6 +342,7 @@ class _FakeDoc {
   String get id => json['id'] as String? ?? '';
   int get week => json['week'] as int? ?? 0;
   int get order => json['order'] as int? ?? 0;
+  DocCategory get category => DocCategory.parse(json['category']);
   String get title => json['title'] as String? ?? '';
   WeeklyDoc get doc => WeeklyDoc.fromJson(json);
 
@@ -330,6 +352,7 @@ class _FakeDoc {
       id: id,
       week: week,
       order: order,
+      category: category,
       title: title,
       skill: d.meta.skill,
       template: d.template,

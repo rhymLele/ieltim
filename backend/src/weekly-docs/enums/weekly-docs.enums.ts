@@ -5,6 +5,12 @@ export enum DocStatus {
   ARCHIVED = 'archived',
 }
 
+/** Loại tài liệu: bài học ("Tài liệu") hoặc bài tập về nhà ("Bài tập", tag HOMEWORK). */
+export enum DocCategory {
+  LESSON = 'lesson',
+  HOMEWORK = 'homework',
+}
+
 export enum LearningActivityType {
   SECTION_VIEW = 'section_view',
   QUIZ_ANSWER = 'quiz_answer',

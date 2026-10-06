@@ -64,13 +64,15 @@ void main() {
       expect(weeks.currentWeekNumber, 12);
       expect(weeks.byNumber(13)?.isLocked, isTrue);
       expect(weeks.byNumber(13)?.docTotal, 0);
-      expect(weeks.byNumber(12)?.docTotal, 2);
+      expect(weeks.byNumber(12)?.docTotal, 3); // 2 tài liệu + 1 bài tập
     });
 
     test('GetWeekDocs: tuần khoá trả WEEK_LOCKED', () async {
       expect(_code(_error(await GetWeekDocsUseCase(repo).execute(13))), 'WEEK_LOCKED');
       final docs = _data(await GetWeekDocsUseCase(repo).execute(12));
-      expect(docs.map((e) => e.summary.id), ['w12-doc1', 'w12-doc2']);
+      // Tài liệu trước, bài tập sau.
+      expect(docs.map((e) => e.summary.id), ['w12-doc1', 'w12-doc2', 'w12-hw1']);
+      expect(docs.last.summary.category, DocCategory.homework);
     });
 
     test('GetLearnerDoc: nháp chưa xuất bản trả DOC_NOT_FOUND', () async {
@@ -135,9 +137,9 @@ void main() {
     });
 
     test('CreateDraft: trùng số thứ tự trả DOC_ORDER_TAKEN', () async {
-      final taken = await CreateDraftUseCase(repo).execute(week: 12, order: 1, content: _validContent(week: 12, order: 1));
+      final taken = await CreateDraftUseCase(repo).execute(week: 12, order: 1, category: DocCategory.lesson, content: _validContent(week: 12, order: 1));
       expect(_code(_error(taken)), 'DOC_ORDER_TAKEN');
-      final created = _data(await CreateDraftUseCase(repo).execute(week: 12, order: 4, content: _validContent(week: 12, order: 4)));
+      final created = _data(await CreateDraftUseCase(repo).execute(week: 12, order: 4, category: DocCategory.lesson, content: _validContent(week: 12, order: 4)));
       expect(created.summary.id, 'w12-doc4');
       expect(created.summary.status, DocStatus.draft);
     });
@@ -159,7 +161,7 @@ void main() {
       expect(invalid, isA<InvalidContentException>());
       expect((invalid as InvalidContentException).validation.errors, isNotEmpty);
 
-      final created = _data(await CreateDraftUseCase(repo).execute(week: 12, order: 4, content: _validContent(week: 12, order: 4)));
+      final created = _data(await CreateDraftUseCase(repo).execute(week: 12, order: 4, category: DocCategory.lesson, content: _validContent(week: 12, order: 4)));
       final scheduled = _data(await PublishDocUseCase(repo).execute(created.summary.id, at: DateTime.now().add(const Duration(days: 1))));
       expect(scheduled.summary.status, DocStatus.scheduled);
       expect(_data(await UnscheduleDocUseCase(repo).execute(created.summary.id)).summary.status, DocStatus.draft);
@@ -178,6 +180,20 @@ void main() {
       expect(await DeleteDocUseCase(repo).execute('w12-doc3'), isA<Success<void>>());
       expect(_code(_error(await GetAdminDocUseCase(repo).execute('w12-doc3'))), 'DOC_NOT_FOUND');
       expect(_data(await UndoDeleteDocUseCase(repo).execute('w12-doc3')).summary.id, 'w12-doc3');
+    });
+
+    test('Bài tập đánh số riêng: trùng số cùng loại → DOC_ORDER_TAKEN, mã w{tuần}-hw{số}', () async {
+      final taken = _error(await CreateDraftUseCase(repo).execute(week: 12, order: 1, category: DocCategory.homework, content: _validContent(week: 12, order: 1)));
+      expect(_code(taken), 'DOC_ORDER_TAKEN');
+      expect(taken.message, 'Tuần 12 đã có Bài tập 1.');
+      final created = _data(await CreateDraftUseCase(repo).execute(week: 12, order: 2, category: DocCategory.homework, content: _validContent(week: 12, order: 2)));
+      expect(created.summary.id, 'w12-hw2');
+      expect(created.summary.category, DocCategory.homework);
+      expect(created.content.value['category'], 'homework');
+      // Nhân bản giữ loại, lấy số kế tiếp của bài tập ở tuần đích.
+      final copy = _data(await DuplicateDocUseCase(repo).execute('w12-hw1', targetWeek: 13));
+      expect(copy.summary.id, 'w13-hw1');
+      expect(copy.summary.category, DocCategory.homework);
     });
 
     test('DuplicateDoc tạo nháp ở cuối tuần đích', () async {

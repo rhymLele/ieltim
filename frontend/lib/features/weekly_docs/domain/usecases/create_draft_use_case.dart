@@ -1,6 +1,7 @@
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/errors/result.dart';
 import '../entities/admin_doc.dart';
+import '../entities/doc_category.dart';
 import '../entities/doc_json.dart';
 import '../repositories/weekly_docs_repository.dart';
 
@@ -9,6 +10,7 @@ class CreateDraftUseCase {
 
   final WeeklyDocsRepository _repository;
 
-  /// Tạo nháp ở tuần [week], số [order] từ [content]. Trùng số → `DOC_ORDER_TAKEN`.
-  Future<Result<AdminDoc>> execute({required int week, required int order, required DocJson content}) => _repository.createDraft(week: week, order: order, content: content);
+  /// Tạo nháp loại [category] ở tuần [week], số [order] từ [content]. Trùng số cùng loại → `DOC_ORDER_TAKEN`.
+  Future<Result<AdminDoc>> execute({required int week, required int order, required DocCategory category, required DocJson content}) =>
+      _repository.createDraft(week: week, order: order, category: category, content: content);
 }

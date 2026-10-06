@@ -65,6 +65,7 @@ class DocModel {
     required this.id,
     required this.week,
     required this.order,
+    required this.category,
     required this.title,
     required this.skill,
     required this.template,
@@ -90,6 +91,10 @@ class DocModel {
   final String id;
   final int week;
   final int order;
+
+  /// `lesson` | `homework`; BE cũ không trả thì coi như tài liệu thường.
+  @JsonKey(defaultValue: 'lesson')
+  final String category;
   final String title;
   final String skill;
   final String template;
@@ -118,6 +123,7 @@ class DocModel {
         id: id,
         week: week,
         order: order,
+        category: DocCategory.parse(category),
         title: title,
         skill: skill,
         template: template,

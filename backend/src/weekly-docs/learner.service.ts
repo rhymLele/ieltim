@@ -96,7 +96,8 @@ export class LearnerService {
       throw weeklyError(403, 'WEEK_LOCKED', `Tuần ${number} chưa mở.`);
     const docs = await this.docs.find({
       where: { week: number, status: DocStatus.PUBLISHED },
-      order: { order: 'ASC' },
+      // Tài liệu trước, bài tập sau; mỗi loại theo số thứ tự.
+      order: { category: 'DESC', order: 'ASC' },
     });
     const rows = docs.length
       ? await this.progress.find({
@@ -398,6 +399,7 @@ export class LearnerService {
       id: d.id,
       week: d.week,
       order: d.order,
+      category: d.category,
       title: d.title,
       skill: d.skill,
       template: d.template,

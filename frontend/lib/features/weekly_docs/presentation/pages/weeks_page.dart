@@ -92,28 +92,84 @@ class _WeeksContent extends StatelessWidget {
       );
     }
     final entries = state.entries;
-    final done = entries.where((e) => e.progress.completed).length;
+    final lessons = entries.where((e) => !e.summary.isHomework).toList();
+    final homework = entries.where((e) => e.summary.isHomework).toList();
     final nextLocked = state.weekList.weeks.where((w) => w.isLocked);
+    final loading = state.isLoadingDocs && entries.isEmpty;
     return ListView(
       padding: padding,
       children: [
         if (desktop) ...[const Text('Theo tuần', style: AppText.display), const SizedBox(height: AppSpace.lg)],
         WeekChips(weeks: state.visibleWeeks, selectedWeek: state.selectedWeek, onSelected: context.read<WeeksCubit>().selectWeek),
         const SizedBox(height: 14),
-        WeekSummaryCard(week: selected, done: done, total: entries.length, desktop: desktop),
+        WeekSummaryCard(week: selected, counts: WeekProgressCounts.of(entries), desktop: desktop),
         const SizedBox(height: 14),
-        const Eyebrow('Tài liệu tuần này'),
-        const SizedBox(height: AppSpace.md),
-        if (state.isLoadingDocs && entries.isEmpty)
-          for (var i = 0; i < 2; i++) ...[const SkeletonBox(height: 108, radius: AppRadius.cardLg), const SizedBox(height: 14)]
-        else if (entries.isEmpty)
-          const Padding(padding: EdgeInsets.only(top: 24), child: EmptyState(message: 'Tuần này chưa có tài liệu'))
-        else if (desktop)
-          WeekDocGrid(entries: entries, screenWidth: screenWidth, onOpen: (e) => _open(context, e))
-        else
-          for (final e in entries) ...[WeekDocCard(entry: e, onTap: () => _open(context, e)), const SizedBox(height: 14)],
+        _DocSection(
+          key: const Key('weekly_docs_lessons_section'),
+          title: 'Tài liệu tuần này',
+          entries: lessons,
+          isLoading: loading,
+          emptyMessage: 'Tuần này chưa có tài liệu',
+          desktop: desktop,
+          screenWidth: screenWidth,
+          onOpen: (e) => _open(context, e),
+        ),
+        if (!loading) ...[
+          const SizedBox(height: AppSpace.lg),
+          _DocSection(
+            key: const Key('weekly_docs_homework_section'),
+            title: 'Bài tập về nhà',
+            entries: homework,
+            isLoading: false,
+            emptyMessage: 'Tuần này chưa có bài tập',
+            desktop: desktop,
+            screenWidth: screenWidth,
+            onOpen: (e) => _open(context, e),
+          ),
+        ],
         const SizedBox(height: 2),
         NewDocsHint(nextWeek: nextLocked.isEmpty ? null : nextLocked.first),
+      ],
+    );
+  }
+}
+
+/// Một nhóm thẻ có tiêu đề ("Tài liệu tuần này" / "Bài tập về nhà"): đang tải, trống, lưới (desktop) hoặc danh sách.
+class _DocSection extends StatelessWidget {
+  const _DocSection({
+    super.key,
+    required this.title,
+    required this.entries,
+    required this.isLoading,
+    required this.emptyMessage,
+    required this.desktop,
+    required this.screenWidth,
+    required this.onOpen,
+  });
+
+  final String title;
+  final List<WeekDocEntry> entries;
+  final bool isLoading;
+  final String emptyMessage;
+  final bool desktop;
+  final double screenWidth;
+  final ValueChanged<WeekDocEntry> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Eyebrow(title),
+        const SizedBox(height: AppSpace.md),
+        if (isLoading)
+          for (var i = 0; i < 2; i++) ...[const SkeletonBox(height: 108, radius: AppRadius.cardLg), const SizedBox(height: 14)]
+        else if (entries.isEmpty)
+          Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(emptyMessage, style: AppText.caption))
+        else if (desktop)
+          Padding(padding: const EdgeInsets.only(bottom: 14), child: WeekDocGrid(entries: entries, screenWidth: screenWidth, onOpen: onOpen))
+        else
+          for (final e in entries) ...[WeekDocCard(entry: e, onTap: () => onOpen(e)), const SizedBox(height: 14)],
       ],
     );
   }

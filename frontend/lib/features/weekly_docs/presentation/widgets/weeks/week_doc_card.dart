@@ -5,7 +5,7 @@ import '../../../domain/entities/learner_doc.dart';
 import '../../../domain/entities/weekly_doc.dart';
 import '../common_widgets.dart';
 
-/// Thẻ một tài liệu trong tuần: kiểu xem, số phần, số phút, trạng thái học.
+/// Thẻ một tài liệu / bài tập trong tuần: kiểu xem, số phần, số phút, trạng thái học; bài tập có tag HOMEWORK.
 class WeekDocCard extends StatelessWidget {
   const WeekDocCard({super.key, required this.entry, required this.onTap});
 
@@ -47,7 +47,19 @@ class WeekDocCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tài liệu ${doc.order} · ${skillLabels[doc.skill] ?? doc.skill}', style: AppText.caption.copyWith(fontWeight: FontWeight.w700)),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '${doc.numberLabel} · ${skillLabels[doc.skill] ?? doc.skill}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.caption.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        if (doc.isHomework) ...[const SizedBox(width: 6), const HomeworkTag()],
+                      ],
+                    ),
                     const SizedBox(height: 3),
                     Text(doc.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, height: 1.25, fontWeight: FontWeight.w800, color: AppColors.textInk)),
                     const SizedBox(height: 3),
@@ -71,7 +83,7 @@ class WeekDocCard extends StatelessWidget {
   }
 }
 
-/// Lưới thẻ tài liệu cho desktop (2 cột, ≥ 1200px thì 3 cột).
+/// Lưới thẻ cho desktop (2 cột, ≥ 1200px thì 3 cột).
 class WeekDocGrid extends StatelessWidget {
   const WeekDocGrid({super.key, required this.entries, required this.screenWidth, required this.onOpen});
 

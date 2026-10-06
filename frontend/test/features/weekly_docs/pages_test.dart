@@ -69,6 +69,12 @@ void main() {
     await _open(tester, AppRoutes.weekly);
     expect(find.byKey(const Key('weekly_docs_week_12_chip')), findsOneWidget);
     expect(find.byKey(const Key('weekly_docs_doc_w12-doc1_card')), findsOneWidget);
+    // Bài tập nằm ở nhóm riêng, có tag HOMEWORK.
+    final homework = find.byKey(const Key('weekly_docs_homework_section'));
+    expect(find.descendant(of: homework, matching: find.byKey(const Key('weekly_docs_doc_w12-hw1_card'))), findsOneWidget);
+    expect(find.descendant(of: homework, matching: find.text('HOMEWORK')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('weekly_docs_lessons_section')), matching: find.text('HOMEWORK')), findsNothing);
+    expect(find.textContaining('0/2 tài liệu · 0/1 bài tập'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('weekly_docs_doc_w12-doc2_card')));
     await _settle(tester);
@@ -105,6 +111,13 @@ void main() {
     await _open(tester, AppRoutes.adminWeeklyDocCreate(week: 12));
     expect(tester.widget<TextField>(find.byKey(const Key('weekly_docs_creator_order_field'))).controller?.text, '4');
     expect(find.text('w12-doc4.json'), findsOneWidget);
+    // Chuyển sang Bài tập rồi về lại: số thứ tự theo dãy của từng loại.
+    await tester.tap(find.byKey(const Key('weekly_docs_creator_category_homework_chip')));
+    await _settle(tester);
+    expect(tester.widget<TextField>(find.byKey(const Key('weekly_docs_creator_order_field'))).controller?.text, '2');
+    expect(find.text('Bài tập số'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('weekly_docs_creator_category_lesson_chip')));
+    await _settle(tester);
 
     await tester.enterText(find.byKey(const Key('weekly_docs_creator_title_field')), 'Listening: Map labelling');
     await tester.tap(find.byKey(const Key('weekly_docs_creator_forward_button')));

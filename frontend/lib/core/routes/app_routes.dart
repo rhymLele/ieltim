@@ -38,9 +38,12 @@ abstract final class AppRoutes {
   static const adminWeeklyDocs = '/admin/weekly-docs';
   static const adminWeeklyDocCreateSegment = 'create';
 
-  /// Tạo tài liệu; `week` là tuần gợi ý sẵn ở bước 1.
-  static String adminWeeklyDocCreate({int? week}) =>
-      week == null ? '$adminWeeklyDocs/create' : '$adminWeeklyDocs/create?week=$week';
+  /// Tạo tài liệu; `week` là tuần gợi ý sẵn ở bước 1, `homework` chọn sẵn loại Bài tập.
+  static String adminWeeklyDocCreate({int? week, bool homework = false}) {
+    final query = [if (week != null) 'week=$week', if (homework) 'category=homework'];
+    return query.isEmpty ? '$adminWeeklyDocs/create' : '$adminWeeklyDocs/create?${query.join('&')}';
+  }
+
   static const adminWeeklyDocEditSegment = ':id/edit';
   static String adminWeeklyDocEdit(String id) => '$adminWeeklyDocs/$id/edit';
   static const adminWeeklyDocPreviewSegment = ':id/preview';

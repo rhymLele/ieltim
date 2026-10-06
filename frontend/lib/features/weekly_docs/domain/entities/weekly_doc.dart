@@ -1,6 +1,10 @@
 // weekly_doc.dart — Model tài liệu theo tuần (schemaVersion 1).
 // Parse an toàn: type lạ → UnknownBlock, không bao giờ throw.
 
+import 'doc_category.dart';
+
+export 'doc_category.dart';
+
 enum DocViewMode {
   slide,
   doc;
@@ -52,6 +56,7 @@ class WeeklyDoc {
     required this.id,
     required this.week,
     required this.order,
+    this.category = DocCategory.lesson,
     required this.title,
     this.template = 'custom',
     this.meta = const DocMeta(),
@@ -68,6 +73,7 @@ class WeeklyDoc {
       id: _s(j['id']),
       week: _int(j['week']),
       order: _int(j['order']),
+      category: DocCategory.parse(j['category']),
       title: _s(j['title']),
       template: _sOrNull(j['template']) ?? 'custom',
       meta: DocMeta.fromJson(j['meta']),
@@ -81,6 +87,7 @@ class WeeklyDoc {
   final String id;
   final int week;
   final int order;
+  final DocCategory category;
   final String title;
   final String template;
   final DocMeta meta;
@@ -90,11 +97,15 @@ class WeeklyDoc {
 
   bool get isHtml => template == 'html';
 
+  /// "Tài liệu 1" / "Bài tập 1".
+  String get numberLabel => '${category.label} $order';
+
   Map<String, dynamic> toJson() => {
         'schemaVersion': schemaVersion,
         'id': id,
         'week': week,
         'order': order,
+        'category': category.name,
         'title': title,
         'template': template,
         'meta': meta.toJson(),

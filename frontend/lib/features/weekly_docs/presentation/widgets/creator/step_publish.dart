@@ -232,7 +232,7 @@ class PublishSuccessCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpace.md),
                 Text(
-                  scheduled ? 'Đã hẹn giờ Tài liệu ${doc.order} · Tuần ${doc.week}' : 'Đã xuất bản Tài liệu ${doc.order} vào Tuần ${doc.week}',
+                  scheduled ? 'Đã hẹn giờ ${doc.numberLabel} · Tuần ${doc.week}' : 'Đã xuất bản ${doc.numberLabel} vào Tuần ${doc.week}',
                   style: AppText.title.copyWith(fontSize: 22),
                 ),
                 const SizedBox(height: AppSpace.sm),
@@ -255,7 +255,7 @@ class PublishSuccessCard extends StatelessWidget {
                     OutlinedButton(
                       key: const Key('weekly_docs_creator_create_next_button'),
                       onPressed: () => onCreateNext(doc.week),
-                      child: Text('Tạo tài liệu $nextOrder'),
+                      child: Text('Tạo ${state.category.label.toLowerCase()} $nextOrder'),
                     ),
                   ],
                 ),

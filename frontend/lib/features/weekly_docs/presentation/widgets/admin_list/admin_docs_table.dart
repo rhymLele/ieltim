@@ -95,7 +95,12 @@ class _DocRow extends StatelessWidget {
           decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.borderLight))),
           child: _Cells(cells: [
             Text('${d.week}·${d.order}', style: AppText.label.copyWith(color: AppColors.textMuted)),
-            Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.label.copyWith(fontSize: 14)),
+            Row(
+              children: [
+                if (d.isHomework) ...[const HomeworkTag(), const SizedBox(width: 8)],
+                Expanded(child: Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.label.copyWith(fontSize: 14))),
+              ],
+            ),
             Text(skillLabels[d.skill] ?? d.skill, style: AppText.caption),
             Text(d.isHtml ? 'HTML' : (d.defaultView == DocViewMode.slide ? 'Slide' : 'Doc'), style: AppText.caption),
             Align(alignment: Alignment.centerLeft, child: StatusBadge(status: d.status, suffix: suffix)),

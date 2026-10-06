@@ -138,6 +138,17 @@ void main() {
       await sub.cancel();
     });
 
+    test('loại tài liệu: BE cũ không có `category` → Tài liệu; bài tập gửi `category` khi tạo', () async {
+      serve((_) => _json(_doc()));
+      expect(dataOf(await repo.getAdminDoc('w12-doc1')).summary.category, DocCategory.lesson);
+
+      serve((_) => _json({..._doc(), 'id': 'w12-hw1', 'category': 'homework'}));
+      final created = dataOf(await repo.createDraft(week: 12, order: 1, category: DocCategory.homework, content: DocJson(sampleReadingDoc())));
+      expect(created.summary.isHomework, isTrue);
+      expect(created.summary.numberLabel, 'Bài tập 1');
+      expect(adapter.requests.single.data, containsPair('category', 'homework'));
+    });
+
     test('ghi của admin thành công thì báo DocumentsChanged', () async {
       serve((_) => _json(_doc(version: 2)));
       final changes = <WeeklyDocsChange>[];
@@ -177,7 +188,7 @@ void main() {
 
     test('lỗi nghiệp vụ khác giữ mã của máy chủ; message dạng mảng được nối lại', () async {
       serve((_) => _json(_error('DOC_ORDER_TAKEN', 'Tuần 12 đã có Tài liệu 1.', status: 409), 409));
-      final taken = failureOf(await repo.createDraft(week: 12, order: 1, content: DocJson(sampleReadingDoc())));
+      final taken = failureOf(await repo.createDraft(week: 12, order: 1, category: DocCategory.lesson, content: DocJson(sampleReadingDoc())));
       expect((taken as ServerException).code, 'DOC_ORDER_TAKEN');
 
       serve((_) => _json({'status': 'error', 'message': ['week phải ≥ 1', 'order phải ≥ 1'], 'error': 'Bad Request'}, 400));

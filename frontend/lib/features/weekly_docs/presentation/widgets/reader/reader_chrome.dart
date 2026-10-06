@@ -37,7 +37,7 @@ class PreviewBanner extends StatelessWidget {
       );
 }
 
-/// "Tuần 12 · Tài liệu 1" + tên tài liệu.
+/// "Tuần 12 · Tài liệu 1" (hoặc "Bài tập 1") + tên tài liệu.
 class ReaderTitleBlock extends StatelessWidget {
   const ReaderTitleBlock({super.key, required this.doc, required this.desktop});
 
@@ -50,7 +50,7 @@ class ReaderTitleBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            desktop ? 'Theo tuần › Tuần ${doc.week} › Tài liệu ${doc.order}' : 'Tuần ${doc.week} · Tài liệu ${doc.order}',
+            desktop ? 'Theo tuần › Tuần ${doc.week} › ${doc.numberLabel}' : 'Tuần ${doc.week} · ${doc.numberLabel}',
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted),
           ),
           Text(

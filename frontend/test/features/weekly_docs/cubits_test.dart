@@ -32,7 +32,7 @@ void main() {
       expect(cubit.state.status, LoadStatus.ready);
       expect(cubit.state.selectedWeek, 12);
       expect(cubit.state.visibleWeeks.map((w) => w.number), [10, 11, 12, 13]);
-      expect(cubit.state.entries.map((e) => e.summary.id), ['w12-doc1', 'w12-doc2']);
+      expect(cubit.state.entries.map((e) => e.summary.id), ['w12-doc1', 'w12-doc2', 'w12-hw1']);
     });
 
     test('học xong ở màn đọc thì thẻ tài liệu cập nhật theo', () async {
@@ -68,6 +68,17 @@ void main() {
       expect(completion?.nextDoc?.id, 'w12-doc2');
     });
 
+    test('hoàn thành bài tập: tài liệu kế tiếp chỉ tìm trong bài tập', () async {
+      final cubit = DocReaderCubit(docId: 'w12-hw1');
+      addTearDown(cubit.close);
+      await cubit.load();
+      expect(cubit.state.doc?.category, DocCategory.homework);
+      expect(cubit.state.doc?.numberLabel, 'Bài tập 1');
+      await cubit.complete();
+      expect(cubit.state.completion?.result.completedNow, isTrue);
+      expect(cubit.state.completion?.nextDoc, isNull);
+    });
+
     test('admin xem trước: không ghi tiến độ, "Hoàn thành" chỉ yêu cầu đóng màn', () async {
       final cubit = DocReaderCubit(docId: 'w12-doc3', isAdminPreview: true);
       addTearDown(cubit.close);
@@ -101,7 +112,10 @@ void main() {
       addTearDown(cubit.close);
       await cubit.load();
       expect(cubit.state.week, 12);
-      expect(cubit.state.visibleDocs.map((d) => d.id), ['w12-doc1', 'w12-doc2', 'w12-doc3']);
+      expect(cubit.state.visibleDocs.map((d) => d.id), ['w12-doc1', 'w12-doc2', 'w12-doc3', 'w12-hw1']);
+      cubit.toggleCategory(DocCategory.homework, selected: true);
+      expect(cubit.state.visibleDocs.map((d) => d.id), ['w12-hw1']);
+      cubit.toggleCategory(DocCategory.homework, selected: false);
       cubit.toggleStatus(DocStatus.draft, selected: true);
       expect(cubit.state.visibleDocs.map((d) => d.id), ['w12-doc3']);
       cubit
@@ -154,6 +168,31 @@ void main() {
       await cubit.forward();
       expect(cubit.state.step, 2);
       expect(cubit.state.record?.summary.id, 'w12-doc4');
+    });
+
+    test('tạo bài tập: số thứ tự và mã theo dãy bài tập, khoá loại sau khi tạo', () async {
+      final cubit = DocCreatorCubit(initialWeek: 12, autosaveDelay: const Duration(hours: 1));
+      addTearDown(cubit.close);
+      await cubit.start();
+      expect(cubit.state.orderText, '4');
+      cubit.setCategory(DocCategory.homework);
+      expect(cubit.state.orderText, '2');
+      expect(cubit.state.fileName, 'w12-hw2.json');
+
+      cubit.setTitle('Bài tập: viết thân bài');
+      await cubit.forward();
+      expect(cubit.state.record?.summary.id, 'w12-hw2');
+      expect(cubit.state.doc.numberLabel, 'Bài tập 2');
+      cubit.setCategory(DocCategory.lesson);
+      expect(cubit.state.category, DocCategory.homework);
+    });
+
+    test('mở thẳng link tạo bài tập (?category=homework): chọn sẵn loại Bài tập', () async {
+      final cubit = DocCreatorCubit(initialWeek: 12, initialCategory: DocCategory.homework, autosaveDelay: const Duration(hours: 1));
+      addTearDown(cubit.close);
+      await cubit.start();
+      expect(cubit.state.category, DocCategory.homework);
+      expect(cubit.state.orderText, '2');
     });
 
     test('sửa nội dung thì tự lưu nháp và tăng version', () async {

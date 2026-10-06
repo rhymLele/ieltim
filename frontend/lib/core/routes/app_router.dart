@@ -7,6 +7,7 @@ import '../../features/auth/presentation/views/access_key_page.dart';
 import '../../features/home/presentation/views/home_page.dart';
 import '../../features/documents/presentation/bloc/weekly_documents_bloc.dart';
 import '../../features/documents/presentation/views/weekly_documents_page.dart';
+import '../../features/weekly_docs/domain/entities/doc_category.dart';
 import '../../features/weekly_docs/presentation/cubits/doc_complete_cubit.dart';
 import '../../features/weekly_docs/presentation/pages/admin_docs_page.dart';
 import '../../features/weekly_docs/presentation/pages/doc_complete_page.dart';
@@ -191,8 +192,11 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.adminWeeklyDocCreateSegment,
-              // Không có ?week thì màn soạn tự chọn tuần hiện tại.
-              builder: (context, state) => DocCreatorPage(initialWeek: int.tryParse(state.uri.queryParameters['week'] ?? '') ?? 0),
+              // Không có ?week thì màn soạn tự chọn tuần hiện tại; ?category=homework chọn sẵn loại Bài tập.
+              builder: (context, state) => DocCreatorPage(
+                initialWeek: int.tryParse(state.uri.queryParameters['week'] ?? '') ?? 0,
+                initialCategory: DocCategory.parse(state.uri.queryParameters['category']),
+              ),
             ),
             GoRoute(
               path: AppRoutes.adminWeeklyDocEditSegment,

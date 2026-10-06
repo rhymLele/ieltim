@@ -42,6 +42,7 @@ class DocCreatorState {
     this.weekText = '',
     this.orderText = '',
     this.fieldsEpoch = 0,
+    this.category = DocCategory.lesson,
     this.skill = 'reading',
     this.templateId = 'reading-lesson',
     this.titleError,
@@ -90,6 +91,9 @@ class DocCreatorState {
   final String weekText;
   final String orderText;
   final int fieldsEpoch;
+
+  /// Tài liệu / Bài tập (HOMEWORK). Chọn ở bước 1 khi tạo mới, không đổi sau khi đã tạo nháp.
+  final DocCategory category;
   final String skill;
   final String templateId;
   final String? titleError;
@@ -131,7 +135,7 @@ class DocCreatorState {
   String get htmlFileName => json['htmlFileName'] as String? ?? 'tai_lieu.html';
   List<dynamic> get sections => json['sections'] is List<dynamic> ? json['sections'] as List<dynamic> : const [];
   /// Tên file JSON trên thanh trên: chưa tạo nháp thì theo tuần / số thứ tự đang nhập.
-  String get fileName => '${record?.summary.id ?? 'w$weekText-doc$orderText'}.json';
+  String get fileName => '${record?.summary.id ?? category.code(int.tryParse(weekText) ?? 0, int.tryParse(orderText) ?? 0)}.json';
 
   Map<String, dynamic>? get selectedSectionJson {
     if (sections.isEmpty) return null;
@@ -178,6 +182,7 @@ class DocCreatorState {
     String? weekText,
     String? orderText,
     int? fieldsEpoch,
+    DocCategory? category,
     String? skill,
     String? templateId,
     Object? titleError = keep,
@@ -216,6 +221,7 @@ class DocCreatorState {
         weekText: weekText ?? this.weekText,
         orderText: orderText ?? this.orderText,
         fieldsEpoch: fieldsEpoch ?? this.fieldsEpoch,
+        category: category ?? this.category,
         skill: skill ?? this.skill,
         templateId: templateId ?? this.templateId,
         titleError: identical(titleError, keep) ? this.titleError : titleError as String?,
@@ -245,6 +251,7 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
   DocCreatorCubit({
     this.docId,
     required int initialWeek,
+    DocCategory initialCategory = DocCategory.lesson,
     this.autosaveDelay = const Duration(milliseconds: 1500),
     GetAdminDocUseCase? getAdminDoc,
     GetAdminDocsUseCase? getAdminDocs,
@@ -260,7 +267,7 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
         _saveDraft = saveDraft ?? SaveDraftUseCase(),
         _publishDoc = publishDoc ?? PublishDocUseCase(),
         _releaseDoc = releaseDoc ?? ReleaseDocUseCase(),
-        super(_initialState(isEdit: docId != null, initialWeek: initialWeek));
+        super(_initialState(isEdit: docId != null, initialWeek: initialWeek, category: initialCategory));
 
   /// null = tạo mới; có giá trị = sửa (mở ở bước 2).
   final String? docId;
@@ -281,8 +288,8 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
   String? _sizedHtml;
   int _sizedBytes = 0;
 
-  static DocCreatorState _initialState({required bool isEdit, required int initialWeek}) {
-    final json = buildDocJson(week: initialWeek, order: 1, title: '', templateId: 'reading-lesson', skill: 'reading');
+  static DocCreatorState _initialState({required bool isEdit, required int initialWeek, required DocCategory category}) {
+    final json = buildDocJson(week: initialWeek, order: 1, title: '', templateId: 'reading-lesson', skill: 'reading', category: category);
     return DocCreatorState(
       status: isEdit ? LoadStatus.loading : LoadStatus.ready,
       json: json,
@@ -290,6 +297,7 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
       validation: validateDocJson(json),
       weekText: '$initialWeek',
       orderText: '1',
+      category: category,
     );
   }
 
@@ -297,18 +305,21 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
 
   Future<void> retryLoad() => _loadRecord();
 
-  /// "Tạo tài liệu tiếp theo" sau khi xuất bản (màn tạo mới): soạn lại từ đầu ở tuần [week].
-  /// Cùng URL nên router không dựng lại màn; cubit tự về trạng thái ban đầu.
+  /// "Tạo tài liệu / bài tập tiếp theo" sau khi xuất bản (màn tạo mới): soạn lại từ đầu ở tuần [week],
+  /// giữ loại đang chọn. Cùng URL nên router không dựng lại màn; cubit tự về trạng thái ban đầu.
   Future<void> startOver(int week) {
     _saveTimer?.cancel();
-    final fresh = _initialState(isEdit: false, initialWeek: week);
-    emit(fresh.copyWith(orderText: '${nextOrder(week)}', fieldsEpoch: state.fieldsEpoch + 1, epoch: state.epoch + 1, notice: state.notice));
+    final category = state.category;
+    final fresh = _initialState(isEdit: false, initialWeek: week, category: category);
+    emit(fresh.copyWith(orderText: '${nextOrder(week, category)}', fieldsEpoch: state.fieldsEpoch + 1, epoch: state.epoch + 1, notice: state.notice));
     return _primeNewDoc();
   }
 
-  /// Số thứ tự gợi ý trong tuần [week] (lớn nhất + 1).
-  int nextOrder(int week) {
-    final orders = _existingDocs.where((d) => d.week == week).map((d) => d.order);
+  /// Số thứ tự gợi ý của loại [category] (mặc định loại đang chọn) trong tuần [week]: lớn nhất + 1.
+  /// Tài liệu và bài tập đánh số riêng.
+  int nextOrder(int week, [DocCategory? category]) {
+    final kind = category ?? state.category;
+    final orders = _existingDocs.where((d) => d.week == week && d.category == kind).map((d) => d.order);
     return orders.isEmpty ? 1 : orders.reduce((a, b) => a > b ? a : b) + 1;
   }
 
@@ -347,6 +358,7 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
         fieldsEpoch: state.fieldsEpoch + 1,
         skill: meta.skill,
         templateId: record.summary.template,
+        category: record.summary.category,
         defaultView: meta.defaultView,
         allowSwitch: meta.canSwitch,
         previewView: meta.defaultView,
@@ -388,6 +400,18 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
   }
 
   void setOrderText(String text) => emit(state.copyWith(orderText: text));
+
+  /// Đổi Tài liệu ↔ Bài tập (chỉ khi tạo mới): gợi ý lại số thứ tự theo dãy của loại đó.
+  void setCategory(DocCategory category) {
+    if (state.isEdit || category == state.category) return;
+    final week = int.tryParse(state.weekText);
+    emit(state.copyWith(
+      category: category,
+      orderText: week == null ? null : '${nextOrder(week, category)}',
+      orderError: null,
+      fieldsEpoch: state.fieldsEpoch + 1,
+    ));
+  }
 
   void setSkill(String skill) => emit(state.copyWith(skill: skill));
 
@@ -437,7 +461,7 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
     final order = int.tryParse(state.orderText) ?? 0;
     final template = templateById(state.templateId);
     final titleError = template.isImport || (title.length >= 3 && title.length <= 200) ? null : 'Tên tài liệu cần từ 3 đến 200 ký tự';
-    final orderError = order < 1 ? 'Số thứ tự phải từ 1' : (_orderTaken(week, order) ? 'Tuần $week đã có Tài liệu $order' : null);
+    final orderError = order < 1 ? 'Số thứ tự phải từ 1' : (_orderTaken(week, order) ? 'Tuần $week đã có ${state.category.label} $order' : null);
     emit(state.copyWith(titleError: titleError, orderError: orderError));
     if (titleError != null || orderError != null) return false;
 
@@ -448,11 +472,12 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
       return true;
     }
     state.json
-      ..['title'] = title.isEmpty ? 'Tài liệu mới' : title
+      ..['title'] = title.isEmpty ? '${state.category.label} mới' : title
       ..['week'] = week
-      ..['order'] = order;
+      ..['order'] = order
+      ..['category'] = state.category.name;
     (state.json['meta'] as Map<String, dynamic>)['skill'] = state.skill;
-    final created = await _createDraft.execute(week: week, order: order, content: DocJson(state.json));
+    final created = await _createDraft.execute(week: week, order: order, category: state.category, content: DocJson(state.json));
     if (isClosed) return false;
     switch (created) {
       case Success(:final data):
@@ -469,7 +494,8 @@ class DocCreatorCubit extends Cubit<DocCreatorState> {
     }
   }
 
-  bool _orderTaken(int week, int order) => _existingDocs.any((d) => d.week == week && d.order == order && d.id != state.record?.id);
+  bool _orderTaken(int week, int order) =>
+      _existingDocs.any((d) => d.week == week && d.category == state.category && d.order == order && d.id != state.record?.id);
 
   // ───────────────────────────── Bước 2 ─────────────────────────────
 

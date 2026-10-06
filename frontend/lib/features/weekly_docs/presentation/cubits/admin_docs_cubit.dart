@@ -30,6 +30,7 @@ class AdminDocsState {
     this.docs = const [],
     this.week,
     this.statuses = const {},
+    this.categories = const {},
     this.query = '',
     this.notice,
   });
@@ -42,18 +43,27 @@ class AdminDocsState {
   /// Tuần đang lọc; null = tất cả tuần.
   final int? week;
   final Set<DocStatus> statuses;
+
+  /// Lọc Tài liệu / Bài tập; rỗng = cả hai.
+  final Set<DocCategory> categories;
   final String query;
   final UiNotice? notice;
 
-  /// Danh sách sau khi lọc tuần, trạng thái, tiêu đề (không dấu); tuần mới trước, rồi theo số thứ tự.
+  /// Danh sách sau khi lọc tuần, trạng thái, loại, tiêu đề (không dấu); tuần mới trước, trong tuần tài liệu
+  /// trước rồi bài tập, mỗi loại theo số thứ tự.
   List<DocSummary> get visibleDocs {
     final needle = foldVietnamese(query);
     return docs
         .where((d) => week == null || d.week == week)
         .where((d) => statuses.isEmpty || statuses.contains(d.status))
+        .where((d) => categories.isEmpty || categories.contains(d.category))
         .where((d) => needle.isEmpty || foldVietnamese(d.title).contains(needle))
         .toList()
-      ..sort((a, b) => a.week != b.week ? b.week.compareTo(a.week) : a.order.compareTo(b.order));
+      ..sort((a, b) {
+        if (a.week != b.week) return b.week.compareTo(a.week);
+        if (a.category != b.category) return a.category.index.compareTo(b.category.index);
+        return a.order.compareTo(b.order);
+      });
   }
 
   AdminDocsState copyWith({
@@ -63,6 +73,7 @@ class AdminDocsState {
     List<DocSummary>? docs,
     Object? week = keep,
     Set<DocStatus>? statuses,
+    Set<DocCategory>? categories,
     String? query,
     UiNotice? notice,
   }) =>
@@ -73,6 +84,7 @@ class AdminDocsState {
         docs: docs ?? this.docs,
         week: identical(week, keep) ? this.week : week as int?,
         statuses: statuses ?? this.statuses,
+        categories: categories ?? this.categories,
         query: query ?? this.query,
         notice: notice ?? this.notice,
       );
@@ -146,6 +158,9 @@ class AdminDocsCubit extends Cubit<AdminDocsState> {
 
   void toggleStatus(DocStatus status, {required bool selected}) =>
       emit(state.copyWith(statuses: selected ? {...state.statuses, status} : ({...state.statuses}..remove(status))));
+
+  void toggleCategory(DocCategory category, {required bool selected}) =>
+      emit(state.copyWith(categories: selected ? {...state.categories, category} : ({...state.categories}..remove(category))));
 
   void setQuery(String query) => emit(state.copyWith(query: query));
 

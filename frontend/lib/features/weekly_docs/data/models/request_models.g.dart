@@ -23,6 +23,7 @@ Map<String, dynamic> _$CreateDraftRequestToJson(CreateDraftRequest instance) =>
     <String, dynamic>{
       'week': instance.week,
       'order': instance.order,
+      'category': instance.category,
       'content': const DocJsonConverter().toJson(instance.content),
     };
 

@@ -8,6 +8,8 @@ export const SKILLS = [
   'vocabulary',
 ] as const;
 export const VIEW_MODES = ['slide', 'doc'] as const;
+/** `lesson` = "Tài liệu", `homework` = "Bài tập" (tag HOMEWORK). Mỗi loại đánh số riêng trong tuần. */
+export const DOC_CATEGORIES = ['lesson', 'homework'] as const;
 export const CONTENT_TEMPLATES = [
   'reading-lesson',
   'writing-task2',

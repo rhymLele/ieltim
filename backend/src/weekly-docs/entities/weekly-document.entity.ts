@@ -9,12 +9,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { DocStatus } from '../enums/weekly-docs.enums';
+import { DocCategory, DocStatus } from '../enums/weekly-docs.enums';
 import { Week } from './week.entity';
 
 /**
- * Tài liệu theo tuần. `uid` là khoá nội bộ (tiến độ, lịch sử trỏ vào đây); `id` (`w12-doc1`) là mã công khai,
- * đổi được khi sắp xếp lại tài liệu chưa từng xuất bản (UC-D10).
+ * Tài liệu theo tuần. `uid` là khoá nội bộ (tiến độ, lịch sử trỏ vào đây); `id` (`w12-doc1`, bài tập `w12-hw1`)
+ * là mã công khai, đổi được khi sắp xếp lại tài liệu chưa từng xuất bản (UC-D10).
+ * Tài liệu và bài tập đánh số riêng: tuần 12 có thể có cả Tài liệu 1 lẫn Bài tập 1.
  * Cột `html` / `draft_*` không tự select: API danh sách không đọc chuỗi html tới 5 MB.
  */
 @Entity('weekly_documents')
@@ -22,10 +23,14 @@ import { Week } from './week.entity';
   unique: true,
   where: '"deleted_at" IS NULL',
 })
-@Index('uq_weekly_documents_week_order', ['week', 'order'], {
-  unique: true,
-  where: '"deleted_at" IS NULL',
-})
+@Index(
+  'uq_weekly_documents_week_category_order',
+  ['week', 'category', 'order'],
+  {
+    unique: true,
+    where: '"deleted_at" IS NULL',
+  },
+)
 export class WeeklyDocument {
   @PrimaryGeneratedColumn('uuid')
   uid: string;
@@ -39,6 +44,10 @@ export class WeeklyDocument {
   @ManyToOne(() => Week, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'week_number' })
   weekRef?: Week;
+
+  /** Không đổi sau khi tạo (là một phần của `id`). */
+  @Column({ type: 'varchar', length: 12, default: DocCategory.LESSON })
+  category: DocCategory;
 
   @Column({ name: 'order', type: 'int' })
   order: number;

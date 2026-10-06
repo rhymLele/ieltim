@@ -77,8 +77,8 @@ class WeeklyDocsRepositoryImpl implements WeeklyDocsRepository {
   Future<Result<AdminDoc>> getAdminDoc(String id) => _guard('tải $id', () async => (await _remote.getAdminDoc(id)).toAdminDoc());
 
   @override
-  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocJson content}) =>
-      _adminWrite('tạo nháp', () => _remote.createDraft(CreateDraftRequest(week: week, order: order, content: content)));
+  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocCategory category, required DocJson content}) =>
+      _adminWrite('tạo nháp', () => _remote.createDraft(CreateDraftRequest(week: week, order: order, category: category.name, content: content)));
 
   @override
   Future<Result<AdminDoc>> saveDraft(String id, {required DocJson content, required int version}) =>

@@ -12,6 +12,8 @@ import {
 import {
   DocJson,
   NormalizedDoc,
+  categoryLabel,
+  categoryOf,
   docCode,
   isPlainObject,
   mergeHtml,
@@ -42,6 +44,7 @@ import { WeeklyDocumentRevision } from './entities/weekly-document-revision.enti
 import { WeeklyDocument } from './entities/weekly-document.entity';
 import {
   AuditAction,
+  DocCategory,
   DocStatus,
   RevisionNote,
 } from './enums/weekly-docs.enums';
@@ -148,7 +151,11 @@ export class AdminDocumentsService {
     if (statuses.length)
       qb.andWhere('d.status IN (:...statuses)', { statuses });
     if (q.skill) qb.andWhere('d.skill = :skill', { skill: q.skill });
-    qb.orderBy('d.week', 'DESC').addOrderBy('d.order', 'ASC');
+    if (q.category)
+      qb.andWhere('d.category = :category', { category: q.category });
+    qb.orderBy('d.week', 'DESC')
+      .addOrderBy('d.category', 'DESC') // lesson trước homework
+      .addOrderBy('d.order', 'ASC');
     let rows = await qb.getMany();
     if (q.q?.trim()) {
       const needle = fold(q.q);
@@ -243,17 +250,18 @@ export class AdminDocumentsService {
       throw weeklyError(400, 'WEEK_REQUIRED', 'Chọn tuần cho tài liệu.');
     await this.weeks.ensureUpcoming();
     await this.weeks.findOrFail(week);
+    const category = categoryOf(dto.category ?? given?.category);
     const order =
       dto.order ??
       (Number.isInteger(given?.order) && given!.order >= 1
         ? (given!.order as number)
-        : await this.nextOrder(week));
-    if (await this.docs.exists({ where: { week, order } })) {
+        : await this.nextOrder(week, category));
+    if (await this.docs.exists({ where: { week, category, order } })) {
       throw weeklyError(
         409,
         'DOC_ORDER_TAKEN',
-        `Tuần ${week} đã có Tài liệu ${order}.`,
-        { suggestion: await this.nextOrder(week) },
+        `Tuần ${week} đã có ${categoryLabel(category)} ${order}.`,
+        { suggestion: await this.nextOrder(week, category) },
       );
     }
 
@@ -288,15 +296,16 @@ export class AdminDocumentsService {
     if (dto.html !== undefined) json.html = dto.html;
     if (dto.htmlFileName !== undefined) json.htmlFileName = dto.htmlFileName;
 
-    const n = normalizeDoc(json, { week, order });
+    const n = normalizeDoc(json, { week, order, category });
     this.assertHtmlSize(n);
     let doc: WeeklyDocument;
     try {
       doc = await this.docs.save(
         this.docs.create({
           ...this.livePatch(n),
-          id: docCode(week, order),
+          id: docCode(week, order, category),
           week,
+          category,
           order,
           status: DocStatus.DRAFT,
           version: 1,
@@ -310,7 +319,7 @@ export class AdminDocumentsService {
         throw weeklyError(
           409,
           'DOC_ORDER_TAKEN',
-          `Tuần ${week} đã có Tài liệu ${order}.`,
+          `Tuần ${week} đã có ${categoryLabel(category)} ${order}.`,
         );
       throw e;
     }
@@ -350,7 +359,12 @@ export class AdminDocumentsService {
       );
     const validation = this.validate(parsed);
     const document = await this.create(
-      { week: dto.week, order: dto.order, content: parsed },
+      {
+        week: dto.week,
+        order: dto.order,
+        category: dto.category,
+        content: parsed,
+      },
       actor,
       { action: AuditAction.IMPORT, note: file.originalname },
     );
@@ -549,13 +563,16 @@ export class AdminDocumentsService {
     const doc = await this.findFull(id, { deleted: true });
     if (
       await this.docs.exists({
-        where: [{ id: doc.id }, { week: doc.week, order: doc.order }],
+        where: [
+          { id: doc.id },
+          { week: doc.week, category: doc.category, order: doc.order },
+        ],
       })
     ) {
       throw weeklyError(
         409,
         'DOC_ORDER_TAKEN',
-        `Tuần ${doc.week} đã có Tài liệu ${doc.order}.`,
+        `Tuần ${doc.week} đã có ${categoryLabel(doc.category)} ${doc.order}.`,
       );
     }
     await this.docs.restore({ uid: doc.uid });
@@ -577,7 +594,8 @@ export class AdminDocumentsService {
     return this.create(
       {
         week: targetWeek,
-        order: await this.nextOrder(targetWeek),
+        category: src.category,
+        order: await this.nextOrder(targetWeek, src.category),
         content: json,
       },
       actor,
@@ -619,7 +637,10 @@ export class AdminDocumentsService {
           { id: locked.id },
         );
       }
-      const finalOrders = docs.map((d) => target.get(d.id) ?? d.order);
+      // Tài liệu và bài tập đánh số riêng: chỉ trùng khi cùng loại.
+      const finalOrders = docs.map(
+        (d) => `${d.category}:${target.get(d.id) ?? d.order}`,
+      );
       if (new Set(finalOrders).size !== finalOrders.length) {
         throw weeklyError(
           409,
@@ -627,7 +648,7 @@ export class AdminDocumentsService {
           `Tuần ${week} có hai tài liệu trùng số thứ tự.`,
         );
       }
-      // Hai pha để không vướng ràng buộc duy nhất (week, order) và id khi hoán đổi.
+      // Hai pha để không vướng ràng buộc duy nhất (week, category, order) và id khi hoán đổi.
       for (const [i, d] of moved.entries()) {
         await m.update(
           WeeklyDocument,
@@ -637,7 +658,7 @@ export class AdminDocumentsService {
       }
       for (const d of moved) {
         const order = target.get(d.id)!;
-        const newId = docCode(week, order);
+        const newId = docCode(week, order, d.category);
         const patch: Partial<WeeklyDocument> = {
           id: newId,
           order,
@@ -768,11 +789,16 @@ export class AdminDocumentsService {
 
   // ───────────────────────────── Nội bộ ─────────────────────────────
 
-  async nextOrder(week: number): Promise<number> {
+  /** Số thứ tự kế tiếp của loại [category] trong tuần (tài liệu và bài tập đánh số riêng). */
+  async nextOrder(
+    week: number,
+    category: DocCategory = DocCategory.LESSON,
+  ): Promise<number> {
     const row = await this.docs
       .createQueryBuilder('d')
       .select('MAX(d.order)', 'max')
       .where('d.week = :week', { week })
+      .andWhere('d.category = :category', { category })
       .getRawOne<{ max: number | null }>();
     return (row?.max ?? 0) + 1;
   }
@@ -828,6 +854,7 @@ export class AdminDocumentsService {
       id: d.id,
       week: d.week,
       order: d.order,
+      category: d.category,
       title: d.title,
       skill: d.skill,
       template: d.template,

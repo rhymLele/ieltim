@@ -1,5 +1,8 @@
+import { DocCategory } from '../enums/weekly-docs.enums';
 import {
   blockKey,
+  categoryOf,
+  docCode,
   estimatedMinutes,
   findBlock,
   mergeHtml,
@@ -31,6 +34,23 @@ describe('doc-content', () => {
     );
   });
 
+  it('bài tập (HOMEWORK): mã w{tuần}-hw{số}, category theo bản ghi chứ không theo JSON', () => {
+    expect(docCode(12, 1, DocCategory.HOMEWORK)).toBe('w12-hw1');
+    expect(docCode(12, 1)).toBe('w12-doc1');
+    const n = normalizeDoc(
+      { ...sampleReadingDoc(12), category: 'lesson' },
+      { week: 12, order: 2, category: DocCategory.HOMEWORK },
+    );
+    expect(n.content).toMatchObject({
+      id: 'w12-hw2',
+      category: 'homework',
+      order: 2,
+    });
+    expect(categoryOf('homework')).toBe(DocCategory.HOMEWORK);
+    expect(categoryOf('lạ')).toBe(DocCategory.LESSON);
+    expect(categoryOf(undefined)).toBe(DocCategory.LESSON);
+  });
+
   it('tài liệu HTML: tách html ra cột riêng, 0 section, ghép lại khi đọc', () => {
     const n = normalizeDoc(
       {
@@ -47,6 +67,7 @@ describe('doc-content', () => {
       id: 'w1-doc1',
       week: 1,
       order: 1,
+      category: 'lesson',
       title: 'H',
       template: 'html',
       meta: {},

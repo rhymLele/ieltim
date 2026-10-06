@@ -11,7 +11,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { SKILLS, VIEW_MODES } from '../weekly-docs.constants';
+import { DOC_CATEGORIES, SKILLS, VIEW_MODES } from '../weekly-docs.constants';
 
 /** Tạo nháp từ template (`title`, `skill`, `template`) hoặc từ JSON có sẵn (`content`). */
 export class CreateDocumentDto {
@@ -26,6 +26,11 @@ export class CreateDocumentDto {
   @IsInt()
   @Min(1, { message: 'Số thứ tự phải từ 1' })
   order?: number;
+
+  /** Mặc định `lesson`; không gửi thì lấy `content.category`. */
+  @IsOptional()
+  @IsIn(DOC_CATEGORIES, { message: 'Loại phải là lesson hoặc homework' })
+  category?: string;
 
   @IsOptional()
   @IsString()
@@ -140,6 +145,10 @@ export class ImportDocumentDto {
   @IsInt()
   @Min(1)
   order?: number;
+
+  @IsOptional()
+  @IsIn(DOC_CATEGORIES)
+  category?: string;
 }
 
 export class ListDocumentsQueryDto {
@@ -156,6 +165,10 @@ export class ListDocumentsQueryDto {
   @IsOptional()
   @IsIn(SKILLS)
   skill?: string;
+
+  @IsOptional()
+  @IsIn(DOC_CATEGORIES)
+  category?: string;
 
   @IsOptional()
   @IsString()

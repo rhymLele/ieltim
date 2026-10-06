@@ -48,8 +48,9 @@ abstract interface class WeeklyDocsRepository {
   /// Bản đang soạn đủ nội dung để sửa / xem trước / tải JSON.
   Future<Result<AdminDoc>> getAdminDoc(String id);
 
-  /// Tạo nháp ở tuần [week], số [order] từ [content]. Trùng số → `DOC_ORDER_TAKEN`.
-  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocJson content});
+  /// Tạo nháp loại [category] ở tuần [week], số [order] từ [content]. Mỗi loại đánh số riêng;
+  /// trùng số cùng loại → `DOC_ORDER_TAKEN`.
+  Future<Result<AdminDoc>> createDraft({required int week, required int order, required DocCategory category, required DocJson content});
 
   /// Lưu nháp với [version] đang giữ. Sai version → `VersionConflictException` kèm bản hiện tại.
   /// Tài liệu đang xuất bản: lưu vào bản nháp sửa đổi, người học chưa thấy tới khi [release].

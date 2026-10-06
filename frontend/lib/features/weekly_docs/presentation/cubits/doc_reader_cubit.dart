@@ -204,14 +204,13 @@ class DocReaderCubit extends Cubit<DocReaderState> {
     }
   }
 
-  /// Tài liệu kế tiếp trong tuần; không tải được thì bỏ qua nút "Học tài liệu tiếp theo".
+  /// Tài liệu / bài tập kế tiếp cùng loại trong tuần; không tải được thì bỏ qua nút "Học … tiếp theo".
   Future<DocSummary?> _nextDoc(WeeklyDoc doc) async {
     switch (await _getWeekDocs.execute(doc.week)) {
       case Success(:final data):
-        for (final entry in data) {
-          if (entry.summary.order > doc.order) return entry.summary;
-        }
-        return null;
+        final sameKind = data.map((e) => e.summary).where((s) => s.category == doc.category && s.order > doc.order).toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+        return sameKind.isEmpty ? null : sameKind.first;
       case Failure():
         return null;
     }

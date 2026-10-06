@@ -75,7 +75,7 @@ class _CompleteContent extends StatelessWidget {
         const JumpingKoi(),
         const SizedBox(height: AppSpace.lg),
         Text(
-          'Hoàn thành Tài liệu ${args.doc.order}!',
+          'Hoàn thành ${args.doc.numberLabel}!',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: AppColors.textInk),
         ),
@@ -99,7 +99,10 @@ class _CompleteContent extends StatelessWidget {
             key: const Key('weekly_docs_complete_next_button'),
             onPressed: next == null ? () => _backToList(context) : () => context.go(AppRoutes.weeklyDoc(next.id)),
             style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card))),
-            child: Text(next == null ? 'Về danh sách tuần' : 'Học Tài liệu ${next.order} →', style: const TextStyle(fontSize: 16)),
+            child: Text(
+              next == null ? 'Về danh sách tuần' : '${next.isHomework ? 'Làm' : 'Học'} ${next.numberLabel} →',
+              style: const TextStyle(fontSize: 16),
+            ),
           ),
         ),
         if (next != null) ...[

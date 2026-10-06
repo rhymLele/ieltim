@@ -2,6 +2,7 @@
 // `content` lưu trong JSONB không kèm `html`; chuỗi html (tới 5 MB) nằm ở cột riêng để API danh sách không phải đọc.
 
 import { randomUUID } from 'crypto';
+import { DocCategory } from '../enums/weekly-docs.enums';
 import { SKILLS, VIEW_MODES } from '../weekly-docs.constants';
 
 export type DocJson = Record<string, any>;
@@ -11,6 +12,7 @@ export const KNOWN_TOP_LEVEL_KEYS = [
   'id',
   'week',
   'order',
+  'category',
   'title',
   'template',
   'meta',
@@ -34,8 +36,25 @@ export interface NormalizedDoc {
   estimatedMinutes: number;
 }
 
-export function docCode(week: number, order: number): string {
-  return `w${week}-doc${order}`;
+/** Mã công khai: `w12-doc1` (tài liệu), `w12-hw1` (bài tập). */
+export function docCode(
+  week: number,
+  order: number,
+  category: DocCategory = DocCategory.LESSON,
+): string {
+  return `w${week}-${category === DocCategory.HOMEWORK ? 'hw' : 'doc'}${order}`;
+}
+
+/** Giá trị lạ / thiếu coi như tài liệu thường. */
+export function categoryOf(value: unknown): DocCategory {
+  return value === DocCategory.HOMEWORK
+    ? DocCategory.HOMEWORK
+    : DocCategory.LESSON;
+}
+
+/** "Tài liệu" / "Bài tập", dùng trong thông báo lỗi. */
+export function categoryLabel(category: DocCategory): string {
+  return category === DocCategory.HOMEWORK ? 'Bài tập' : 'Tài liệu';
 }
 
 export function isPlainObject(v: unknown): v is DocJson {
@@ -45,12 +64,12 @@ export function isPlainObject(v: unknown): v is DocJson {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 /**
- * Chuẩn hoá JSON tài liệu trước khi lưu: tách html, ghi đè id / week / order theo bản ghi,
+ * Chuẩn hoá JSON tài liệu trước khi lưu: tách html, ghi đè id / week / order / category theo bản ghi,
  * tính sẵn các trường hiển thị. Không kiểm tra hợp lệ (nháp được lưu dù còn lỗi).
  */
 export function normalizeDoc(
   input: DocJson,
-  record: { week: number; order: number },
+  record: { week: number; order: number; category?: DocCategory },
 ): NormalizedDoc {
   const src = structuredClone(input);
   const content: DocJson = {};
@@ -58,9 +77,11 @@ export function normalizeDoc(
     if (key in src && key !== 'html' && key !== 'htmlFileName')
       content[key] = src[key];
   }
-  content.id = docCode(record.week, record.order);
+  const category = record.category ?? DocCategory.LESSON;
+  content.id = docCode(record.week, record.order, category);
   content.week = record.week;
   content.order = record.order;
+  content.category = category;
   if (!isPlainObject(content.meta)) content.meta = {};
 
   const template =

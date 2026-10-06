@@ -182,6 +182,24 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
+/// Tag "HOMEWORK" của bài tập (thẻ tài liệu, bảng admin).
+class HomeworkTag extends StatelessWidget {
+  const HomeworkTag({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Bài tập về nhà',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(color: AppColors.tipBg, borderRadius: BorderRadius.circular(AppRadius.pill), border: Border.all(color: AppColors.gold)),
+        child: const Text('HOMEWORK', style: TextStyle(fontSize: 10, height: 1.3, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: AppColors.warnText)),
+      ),
+    );
+  }
+}
+
 /// Card trắng viền chuẩn.
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpace.lg), this.radius = AppRadius.card, this.onTap, this.color = AppColors.cardSurface, this.borderColor = AppColors.borderLight});

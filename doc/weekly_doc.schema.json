@@ -7,9 +7,10 @@
   "required": ["schemaVersion", "title", "sections"],
   "properties": {
     "schemaVersion": { "const": 1 },
-    "id": { "type": "string", "pattern": "^w[0-9]+-doc[0-9]+$" },
+    "id": { "type": "string", "pattern": "^w[0-9]+-(doc|hw)[0-9]+$", "description": "w{tuần}-doc{số} cho tài liệu, w{tuần}-hw{số} cho bài tập." },
     "week": { "type": "integer", "minimum": 1 },
-    "order": { "type": "integer", "minimum": 1 },
+    "order": { "type": "integer", "minimum": 1, "description": "Số thứ tự trong tuần, tài liệu và bài tập đánh số riêng." },
+    "category": { "enum": ["lesson", "homework"], "default": "lesson", "description": "lesson = Tài liệu, homework = Bài tập (tag HOMEWORK). Không ghi thì là tài liệu." },
     "title": { "type": "string", "minLength": 1, "maxLength": 200 },
     "template": { "enum": ["reading-lesson", "writing-task2", "vocab-set", "speaking-part2", "blank", "custom", "html"] },
     "html": { "type": "string", "minLength": 1, "description": "Chỉ dùng khi template = html: nguyên file .html (đã có CSS, JS)." },

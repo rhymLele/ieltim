@@ -39,6 +39,7 @@ DocModel _$DocModelFromJson(Map<String, dynamic> json) => DocModel(
   id: json['id'] as String,
   week: (json['week'] as num).toInt(),
   order: (json['order'] as num).toInt(),
+  category: json['category'] as String? ?? 'lesson',
   title: json['title'] as String,
   skill: json['skill'] as String,
   template: json['template'] as String,

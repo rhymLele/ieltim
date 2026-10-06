@@ -1,12 +1,15 @@
 import 'doc_status.dart';
 import 'weekly_doc.dart';
 
+export 'doc_category.dart';
+
 /// Thông tin một tài liệu không kèm nội dung (danh sách admin, danh sách tuần của người học).
 class DocSummary {
   const DocSummary({
     required this.id,
     required this.week,
     required this.order,
+    this.category = DocCategory.lesson,
     required this.title,
     required this.skill,
     required this.template,
@@ -28,6 +31,7 @@ class DocSummary {
   final String id;
   final int week;
   final int order;
+  final DocCategory category;
   final String title;
   final String skill;
   final String template;
@@ -48,6 +52,11 @@ class DocSummary {
   final int htmlSize;
 
   bool get isHtml => template == 'html';
+
+  bool get isHomework => category == DocCategory.homework;
+
+  /// "Tài liệu 1" / "Bài tập 1".
+  String get numberLabel => '${category.label} $order';
 
   /// Đã từng xuất bản: không xoá, không đổi thứ tự được.
   bool get everPublished => publishedAt != null;
