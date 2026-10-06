@@ -69,10 +69,15 @@ class ReaderAnnotations {
           WidgetsBinding.instance.scheduleFrame();
         },
         child: AnnotatableSelectionArea(
-          cardBuilder: (context, text, close) => actions.card(
-            text: text,
-            target: locateSelection(text, blockTexts: blockTexts, mounted: registry.mounted, anchor: _lastPointer),
-            close: close,
+          // Cùng nhóm chạm với SelectionArea: trên web bấm vào hộp thoại (Nghe, Dịch nghĩa…) không bị coi là bấm ra ngoài
+          // vùng chọn (sẽ bỏ chọn và đóng hộp thoại trước khi kịp hiện bản dịch).
+          cardBuilder: (context, text, close) => TapRegion(
+            groupId: SelectableRegion,
+            child: actions.card(
+              text: text,
+              target: locateSelection(text, blockTexts: blockTexts, mounted: registry.mounted, anchor: _lastPointer),
+              close: close,
+            ),
           ),
           child: child,
         ),

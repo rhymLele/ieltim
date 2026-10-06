@@ -44,6 +44,9 @@ class HtmlReaderAnnotations extends ChangeNotifier {
   final bridge = HtmlBridgeController();
   final _floating = FloatingCardOverlay();
 
+  /// Hộp thoại đang mở là của vùng bôi đen (bỏ chọn thì đóng); hộp thoại của chữ đã tô thì không.
+  bool _selectionCard = false;
+
   /// Vị trí khung HTML trên màn (đổi toạ độ vùng chọn trong file sang toạ độ màn hình).
   final frameKey = GlobalKey();
 
@@ -70,7 +73,8 @@ class HtmlReaderAnnotations extends ChangeNotifier {
       case 'selection':
         _showSelection(msg);
       case 'selectionCleared':
-        _floating.close();
+        // Bấm vào chữ đã tô cũng làm file báo bỏ chọn (ngay sau tin highlightTap): giữ hộp thoại đổi màu.
+        if (_selectionCard) _floating.close();
       case 'highlightTap':
         _showHighlight(msg);
       case 'highlightMissing':
@@ -108,6 +112,24 @@ class HtmlReaderAnnotations extends ChangeNotifier {
     }
   }
 
+  /// Hộp thoại nằm đè lên khung HTML. Trên web, Flutter vẽ đè lên iframe nhưng chuột vẫn rơi vào iframe:
+  /// mở hộp thoại thì cho chuột đi xuyên iframe tới hộp thoại, đóng thì trả lại (trừ khi đang cầm bút).
+  void _showCard(
+    BuildContext context, {
+    required Offset anchorTop,
+    required Offset anchorBottom,
+    required Widget Function(VoidCallback close) builder,
+  }) {
+    _floating.show(
+      context,
+      anchorTop: anchorTop,
+      anchorBottom: anchorBottom,
+      builder: builder,
+      onClosed: () => bridge.setPointerPassthrough(enabled: slideNotes.isDrawing),
+    );
+    bridge.setPointerPassthrough(enabled: true);
+  }
+
   /// Đang cầm bút: chuột / chạm đi tới lớp vẽ (web), trang cuộn dọc thì khoá cuộn trong file.
   void _onToolChanged() {
     final drawing = slideNotes.isDrawing;
@@ -125,6 +147,7 @@ class HtmlReaderAnnotations extends ChangeNotifier {
   }
 
   void _showSelection(Map<String, Object?> msg) {
+    _selectionCard = true;
     final text = (msg['text'] as String? ?? '').trim();
     final context = actions.hostContext();
     if (text.isEmpty || !context.mounted) return;
@@ -138,7 +161,7 @@ class HtmlReaderAnnotations extends ChangeNotifier {
       sentence: msg['sentence'] as String? ?? text,
     );
     final rect = _toGlobal(msg['rect']);
-    _floating.show(
+    _showCard(
       context,
       anchorTop: rect.topCenter,
       anchorBottom: rect.bottomCenter,
@@ -168,12 +191,13 @@ class HtmlReaderAnnotations extends ChangeNotifier {
       ];
 
   void _showHighlight(Map<String, Object?> msg) {
+    _selectionCard = false;
     final id = msg['id'];
     final h = id is String ? cubit.state.byId(id) : null;
     final context = actions.hostContext();
     if (h == null || !context.mounted) return;
     final rect = _toGlobal(msg['rect']);
-    _floating.show(
+    _showCard(
       context,
       anchorTop: rect.topCenter,
       anchorBottom: rect.bottomCenter,

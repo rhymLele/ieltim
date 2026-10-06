@@ -227,11 +227,18 @@ class _SelectionCardHostState extends State<_SelectionCardHost> {
 /// phía trên điểm nếu đủ chỗ, không thì phía dưới; luôn nằm trong màn hình.
 class FloatingCardOverlay {
   OverlayEntry? _entry;
+  VoidCallback? _onClosed;
 
   bool get isOpen => _entry != null;
 
-  /// [anchorTop] / [anchorBottom] là toạ độ trên màn hình (global).
-  void show(BuildContext context, {required Offset anchorTop, required Offset anchorBottom, required Widget Function(VoidCallback close) builder}) {
+  /// [anchorTop] / [anchorBottom] là toạ độ trên màn hình (global). [onClosed] gọi một lần khi hộp thoại đóng (mọi cách đóng).
+  void show(
+    BuildContext context, {
+    required Offset anchorTop,
+    required Offset anchorBottom,
+    required Widget Function(VoidCallback close) builder,
+    VoidCallback? onClosed,
+  }) {
     close();
     final overlay = Overlay.of(context);
     // Màn đọc nằm trong khung có thanh bên (ShellRoute): Overlay gần nhất không bắt đầu ở góc màn hình.
@@ -250,12 +257,18 @@ class FloatingCardOverlay {
       ),
     );
     _entry = entry;
+    _onClosed = onClosed;
     overlay.insert(entry);
   }
 
   void close() {
-    _entry?.remove();
+    final entry = _entry;
+    if (entry == null) return;
+    entry.remove();
     _entry = null;
+    final onClosed = _onClosed;
+    _onClosed = null;
+    onClosed?.call();
   }
 }
 
