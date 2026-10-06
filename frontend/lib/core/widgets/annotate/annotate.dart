@@ -1,0 +1,11 @@
+// annotate.dart — import 'annotate/annotate.dart';
+export 'annotate_theme.dart';
+export 'annotation_controller.dart';
+export 'models.dart';
+export 'widgets/annotatable_selection_area.dart';
+export 'widgets/annotation_layer.dart';
+export 'widgets/annotation_toolbar.dart';
+export 'widgets/highlighted_text.dart';
+export 'widgets/notes_panel.dart';
+export 'widgets/selection_actions_card.dart';
+export 'widgets/vocab_sheet.dart';

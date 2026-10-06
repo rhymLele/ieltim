@@ -73,11 +73,15 @@ class ReaderHeader extends StatelessWidget {
     required this.readFraction,
     required this.onBack,
     required this.onViewChanged,
+    this.actions = const [],
   });
 
   final WeeklyDoc doc;
   final bool desktop;
   final DocViewMode view;
+
+  /// Nút thêm cạnh công tắc Slide / Doc (vd "Ghi chú của tôi").
+  final List<Widget> actions;
   final double readFraction;
   final VoidCallback onBack;
   final ValueChanged<DocViewMode> onViewChanged;
@@ -102,6 +106,7 @@ class ReaderHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Expanded(child: ReaderTitleBlock(doc: doc, desktop: desktop)),
+                  ...actions,
                   if (doc.meta.canSwitch)
                     ViewModeToggle(
                       value: view,

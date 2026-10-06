@@ -2,8 +2,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/annotate/annotate.dart';
 import '../../core/app_tokens.dart';
 import '../../domain/entities/weekly_doc.dart';
+import 'annotate/annotation_scope.dart';
+import 'annotate/block_text.dart';
 
 /// Cỡ chữ / khoảng cách theo ngữ cảnh hiển thị (bảng mục 6 file 5).
 class BlockScale {
@@ -56,18 +59,21 @@ class BlockView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = switch (block) {
-      HeadingBlock b => Text(
-        b.text,
-        style: TextStyle(fontSize: scale.heading, height: 1.2, fontWeight: FontWeight.w800, letterSpacing: -0.02 * scale.heading, color: AppColors.textInk),
-      ),
-      ParagraphBlock b => RichTextLite(
-        b.text,
-        style: TextStyle(fontSize: scale.body, height: 1.6, color: AppColors.textInk),
-      ),
-      CalloutBlock b => _Callout(block: b, scale: scale),
-      StepsBlock b => _Steps(block: b, scale: scale),
-      PassageBlock b => _Passage(block: b, scale: scale),
+    // Màn đọc của người học: khối chữ tô highlight của tôi, chạm vào đoạn tô để đổi màu / bỏ.
+    final scope = AnnotationScope.maybeOf(context);
+    final text = scope == null ? null : annotatableText(block);
+    final marks = text == null ? const <TextHighlight>[] : scope!.highlightsOf(blockKey);
+    final ink = _Ink(ranges: marks.isEmpty ? const [] : resolveHighlights(text!, marks), highlights: marks, onTap: scope?.onTapHighlight);
+    final headingStyle = TextStyle(fontSize: scale.heading, height: 1.2, fontWeight: FontWeight.w800, letterSpacing: -0.02 * scale.heading, color: AppColors.textInk);
+    final paragraphStyle = TextStyle(fontSize: scale.body, height: 1.6, color: AppColors.textInk);
+    final Widget content = switch (block) {
+      HeadingBlock b => scope == null ? Text(b.text, style: headingStyle) : HighlightedText(b.text, highlights: marks, style: headingStyle, onTapHighlight: ink.onTap),
+      ParagraphBlock b => scope == null
+          ? RichTextLite(b.text, style: paragraphStyle)
+          : HighlightedRichText(spans: RichTextLite.parse(b.text, paragraphStyle, AppColors.primary), ranges: ink.ranges, style: paragraphStyle, onTapHighlight: ink.onTap),
+      CalloutBlock b => _Callout(block: b, scale: scale, ink: ink),
+      StepsBlock b => _Steps(block: b, scale: scale, ink: ink),
+      PassageBlock b => _Passage(block: b, scale: scale, ink: scope == null ? null : ink),
       QuizBlock b => _Quiz(block: b, blockKey: blockKey, scale: scale, state: quiz),
       VocabBlock b => _Vocab(block: b, scale: scale, trailing: trailingForVocab),
       PatternBlock b => _Pattern(block: b, scale: scale),
@@ -75,6 +81,8 @@ class BlockView extends StatelessWidget {
       SlideBreakBlock _ => const SizedBox.shrink(),
       UnknownBlock _ => _Unknown(scale: scale),
     };
+    // Key theo khối: biết chữ vừa bôi đen nằm ở khối nào.
+    final child = text == null ? content : KeyedSubtree(key: scope!.registry.keyFor(blockKey), child: content);
     if (!highlighted) return child;
     return AnimatedContainer(
       duration: motion(context, 180),
@@ -141,17 +149,35 @@ class RichTextLite extends StatelessWidget {
 
 // ───────────────────────────── Các khối ─────────────────────────────
 
+/// Highlight của một khối: vùng đã tìm được trong chuỗi hiển thị + chạm để sửa.
+class _Ink {
+  const _Ink({required this.ranges, required this.highlights, this.onTap});
+
+  final List<HighlightRange> ranges;
+  final List<TextHighlight> highlights;
+  final ValueChanged<String>? onTap;
+}
+
+/// Nhãn đứng đầu khối callout theo [tone] (cũng là một phần chữ hiển thị để neo highlight).
+String calloutLabel(String tone) => switch (tone) {
+      'warning' => 'Lưu ý: ',
+      'note' => 'Ghi chú: ',
+      _ => 'Mẹo: ',
+    };
+
 class _Callout extends StatelessWidget {
-  const _Callout({required this.block, required this.scale});
+  const _Callout({required this.block, required this.scale, required this.ink});
   final CalloutBlock block;
   final BlockScale scale;
+  final _Ink ink;
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg, icon, label) = switch (block.tone) {
-      'warning' => (AppColors.errorBg, AppColors.primary, Icons.warning_amber_rounded, 'Lưu ý: '),
-      'note' => (AppColors.sidebar, AppColors.textInk, Icons.info_outline_rounded, 'Ghi chú: '),
-      _ => (AppColors.tipBg, AppColors.tipText, Icons.lightbulb_outline_rounded, 'Mẹo: '),
+    final label = calloutLabel(block.tone);
+    final (bg, fg, icon) = switch (block.tone) {
+      'warning' => (AppColors.errorBg, AppColors.primary, Icons.warning_amber_rounded),
+      'note' => (AppColors.sidebar, AppColors.textInk, Icons.info_outline_rounded),
+      _ => (AppColors.tipBg, AppColors.tipText, Icons.lightbulb_outline_rounded),
     };
     return Container(
       padding: EdgeInsets.symmetric(horizontal: scale.body, vertical: scale.body * 0.85),
@@ -165,17 +191,17 @@ class _Callout extends StatelessWidget {
           ),
           SizedBox(width: scale.body * 0.75),
           Expanded(
-            child: Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: scale.body * 0.95, height: 1.55, color: fg),
-                children: [
-                  TextSpan(
-                    text: label,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  ...RichTextLite.parse(block.text, const TextStyle(), fg),
-                ],
-              ),
+            child: HighlightedRichText(
+              style: TextStyle(fontSize: scale.body * 0.95, height: 1.55, color: fg),
+              spans: [
+                TextSpan(
+                  text: label,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                ...RichTextLite.parse(block.text, const TextStyle(), fg),
+              ],
+              ranges: ink.ranges,
+              onTapHighlight: ink.onTap,
             ),
           ),
         ],
@@ -185,13 +211,23 @@ class _Callout extends StatelessWidget {
 }
 
 class _Steps extends StatelessWidget {
-  const _Steps({required this.block, required this.scale});
+  const _Steps({required this.block, required this.scale, required this.ink});
   final StepsBlock block;
   final BlockScale scale;
+  final _Ink ink;
 
   @override
   Widget build(BuildContext context) {
     final box = scale.body * 1.75;
+    final style = TextStyle(fontSize: scale.body, height: 1.5, color: AppColors.textInk);
+    // Chuỗi khối = các bước nối bằng xuống dòng: mỗi bước lấy phần highlight của mình.
+    final items = [for (final item in block.items) RichTextLite.parse(item, style, AppColors.primary)];
+    final starts = <int>[];
+    var at = 0;
+    for (final spans in items) {
+      starts.add(at);
+      at += spansText(spans).length + 1;
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -215,9 +251,11 @@ class _Steps extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: RichTextLite(
-                      block.items[i],
-                      style: TextStyle(fontSize: scale.body, height: 1.5, color: AppColors.textInk),
+                    child: HighlightedRichText(
+                      spans: items[i],
+                      ranges: rangesIn(ink.ranges, starts[i], spansText(items[i]).length),
+                      style: style,
+                      onTapHighlight: ink.onTap,
                     ),
                   ),
                 ),
@@ -230,9 +268,12 @@ class _Steps extends StatelessWidget {
 }
 
 class _Passage extends StatelessWidget {
-  const _Passage({required this.block, required this.scale});
+  const _Passage({required this.block, required this.scale, this.ink});
   final PassageBlock block;
   final BlockScale scale;
+
+  /// null = không có lớp ghi chú (xem trước admin).
+  final _Ink? ink;
 
   @override
   Widget build(BuildContext context) {
@@ -254,10 +295,18 @@ class _Passage extends StatelessWidget {
             ),
             SizedBox(height: scale.gap * 0.45),
           ],
-          Text(
-            block.text,
-            style: TextStyle(fontFamily: AppText.serif, fontSize: scale.body, height: 1.65, color: AppColors.textInk),
-          ),
+          if (ink case final ink?)
+            HighlightedText(
+              block.text,
+              highlights: ink.highlights,
+              onTapHighlight: ink.onTap,
+              style: TextStyle(fontFamily: AppText.serif, fontSize: scale.body, height: 1.65, color: AppColors.textInk),
+            )
+          else
+            Text(
+              block.text,
+              style: TextStyle(fontFamily: AppText.serif, fontSize: scale.body, height: 1.65, color: AppColors.textInk),
+            ),
         ],
       ),
     );

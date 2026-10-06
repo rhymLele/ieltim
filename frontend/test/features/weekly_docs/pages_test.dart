@@ -11,7 +11,15 @@ import 'package:frontend/features/weekly_docs/presentation/pages/doc_complete_pa
 import 'package:frontend/features/weekly_docs/presentation/pages/doc_creator_page.dart';
 import 'package:frontend/features/weekly_docs/presentation/pages/doc_reader_page.dart';
 import 'package:frontend/features/weekly_docs/presentation/pages/weeks_page.dart';
+import 'package:frontend/core/services/logger_service.dart';
+import 'package:frontend/features/annotate/data/datasources/fake_annotate_remote_datasource.dart';
+import 'package:frontend/features/annotate/data/repositories/annotate_repository_impl.dart';
+import 'package:frontend/features/annotate/domain/repositories/annotate_repository.dart';
+import 'package:frontend/features/vocab/data/repositories/fake_vocab_repository.dart';
+import 'package:frontend/features/vocab/domain/repositories/vocab_repository.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Các route của Tài liệu theo tuần như app_router (bỏ phần đăng nhập và AppLayout).
 GoRouter _router(String initialLocation) => GoRouter(
@@ -62,7 +70,15 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 void main() {
-  setUp(() => registerSingleton<WeeklyDocsRepository>(FakeWeeklyDocsRepository(latency: Duration.zero)));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    registerSingleton<LoggerService>(LoggerService(Logger(level: Level.off)));
+    registerSingleton<WeeklyDocsRepository>(FakeWeeklyDocsRepository(latency: Duration.zero));
+    registerSingleton<VocabRepository>(FakeVocabRepository());
+    registerSingleton<AnnotateRepository>(
+      AnnotateRepositoryImpl(remote: FakeAnnotateRemoteDataSource(latency: Duration.zero), currentUserId: () async => 'u1', saveDelay: Duration.zero),
+    );
+  });
   tearDown(resetSingletons);
 
   testWidgets('U1 → U2 → U3: mở tài liệu dạng Doc, học xong thì sang màn hoàn thành', (tester) async {

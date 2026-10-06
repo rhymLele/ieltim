@@ -32,6 +32,7 @@ import '../../features/admin/sentence_patterns/presentation/views/sentence_patte
 import '../../features/admin/tags/presentation/views/admin_tags_page.dart';
 import '../../features/admin/access_keys/presentation/views/admin_access_keys_page.dart';
 import '../../core/widgets/app_layout.dart';
+import '../../core/widgets/not_found_page.dart';
 
 final _tokenStorage = TokenStorage();
 
@@ -45,6 +46,8 @@ GoRouterPageBuilder _tabPage(GoRouterWidgetBuilder builder) =>
 /// Trang cần Bloc thì tạo provider ngay tại route, để mở thẳng bằng URL vẫn chạy.
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.access,
+  // Đường dẫn không khớp trang nào: trang 404 có nút về trang chủ.
+  errorBuilder: (context, state) => NotFoundPage(path: state.uri.path),
   redirect: (context, state) async {
     final isLoggedIn = await _tokenStorage.isLoggedIn();
     final isGoingToAccess = state.matchedLocation == AppRoutes.access;
@@ -85,7 +88,10 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.weeklyDocSegment,
-              builder: (context, state) => DocReaderPage(docId: state.pathParameters['id'] ?? ''),
+              builder: (context, state) => DocReaderPage(
+                docId: state.pathParameters['id'] ?? '',
+                initialBlock: state.uri.queryParameters['block'],
+              ),
               routes: [
                 GoRoute(
                   path: AppRoutes.weeklyDocDoneSegment,

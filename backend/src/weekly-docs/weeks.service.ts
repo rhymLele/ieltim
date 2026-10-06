@@ -61,6 +61,18 @@ export class WeeksService {
     return today < week.startDate ? 'locked' : 'open';
   }
 
+  /** Người dùng chỉ thấy tài liệu PUBLISHED của tuần đã mở (dùng chung cho Sổ từ, ghi chú…). */
+  static docVisible(
+    doc: Pick<WeeklyDocument, 'status' | 'weekRef'> | null | undefined,
+    today = vnDate(),
+  ): boolean {
+    return (
+      doc?.status === DocStatus.PUBLISHED &&
+      !!doc.weekRef &&
+      WeeksService.stateOf(doc.weekRef, today) === 'open'
+    );
+  }
+
   async findOrFail(number: number): Promise<Week> {
     const week = await this.weeks.findOne({ where: { number } });
     if (week) return week;

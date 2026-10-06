@@ -17,7 +17,9 @@ abstract final class AppRoutes {
   // Tài liệu theo tuần (người học)
   static const weekly = '/weekly';
   static const weeklyDocSegment = 'doc/:id';
-  static String weeklyDoc(String id) => '/weekly/doc/$id';
+  /// [block]: mở tới khối này (từ Sổ từ, `?block=`).
+  static String weeklyDoc(String id, {String? block}) =>
+      block == null ? '/weekly/doc/$id' : '/weekly/doc/$id?block=${Uri.encodeQueryComponent(block)}';
   static const weeklyDocDoneSegment = 'done';
   static String weeklyDocDone(String id) => '/weekly/doc/$id/done';
 

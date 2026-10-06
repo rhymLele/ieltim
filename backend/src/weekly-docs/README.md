@@ -54,13 +54,13 @@ Backend cho file nghiệp vụ 1, 2, 7 và 9 (tài liệu HTML). Bảng tự t�
 | PUT    | `/weekly/documents/:id/progress`     | `{ sectionIndex, viewMode? }`, idempotent. Tài liệu đã gỡ → 404 `DOC_UNPUBLISHED`                                             |
 | POST   | `/weekly/documents/:id/quiz-answers` | `{ blockKey, option }` → `{ correct, answer, explain }`                                                                       |
 | POST   | `/weekly/documents/:id/complete`     | → `{ completedNow, weekStage: { done, goal, passedGate, justPassedGate }, streak }`                                           |
-| POST   | `/weekly/vocab/from-document`        | `{ documentId, blockKeys? }` → `{ added, existed, total }`                                                                    |
+| POST   | `/weekly/vocab/from-document`        | `{ documentId, blockKeys? }` → `{ added, existed, total }`, ghi vào sổ `Sổ chung` (Sổ từ nhiều sổ: module `annotations`)      |
 | GET    | `/weekly/me/summary`                 | `{ streakDays, savedWords, weekStage, wordsToReview, wordsLearnedThisWeek }`                                                  |
 
 ## Tài liệu HTML (file 9)
 
 - `template = "html"`, `sections = []`, chuỗi `html` lưu ở cột riêng (không select mặc định): API danh sách không đọc, không trả `html`.
-- Chuỗi `html` tối đa 5 MB UTF-8 → vượt thì 413 `HTML_TOO_LARGE`. Riêng `/api/admin/weekly/*` nhận body tới 8 MB; các API khác giữ 100 KB.
+- Chuỗi `html` tối đa 5 MB UTF-8 → vượt thì 413 `HTML_TOO_LARGE`. Riêng `/api/admin/weekly/*` nhận body tới 8 MB, `/api/me/docs/*` (module `annotations`) 320 KB; các API khác giữ 100 KB.
 - Kiểm tra khi xuất bản chỉ còn một lỗi: "Chưa tải file HTML". BE không render HTML; chuỗi chỉ trả trong JSON của API chi tiết.
 
 ## Mã lỗi

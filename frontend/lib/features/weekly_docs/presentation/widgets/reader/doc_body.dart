@@ -18,6 +18,7 @@ class DocBody extends StatelessWidget {
     required this.isPreview,
     required this.isCompleting,
     required this.onComplete,
+    this.selectable,
   });
 
   final WeeklyDoc doc;
@@ -30,6 +31,9 @@ class DocBody extends StatelessWidget {
   final bool isPreview;
   final bool isCompleting;
   final VoidCallback onComplete;
+
+  /// Bọc nội dung để bôi đen chữ (hộp thoại sổ từ / dịch / highlight).
+  final Widget Function(Widget child)? selectable;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +52,7 @@ class DocBody extends StatelessWidget {
                 AppCard(
                   radius: AppRadius.cardLg,
                   padding: EdgeInsets.all(desktop ? 40 : 20),
-                  child: DocContent(doc: doc, scale: desktop ? BlockScale.docDesktop : BlockScale.docMobile, quiz: quiz, sectionKeys: sectionKeys),
+                  child: _wrap(DocContent(doc: doc, scale: desktop ? BlockScale.docDesktop : BlockScale.docMobile, quiz: quiz, sectionKeys: sectionKeys)),
                 ),
                 const SizedBox(height: AppSpace.lg),
                 SizedBox(
@@ -67,4 +71,6 @@ class DocBody extends StatelessWidget {
       ],
     );
   }
+
+  Widget _wrap(Widget content) => selectable?.call(content) ?? content;
 }

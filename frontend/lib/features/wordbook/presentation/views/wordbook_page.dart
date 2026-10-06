@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart' as fp;
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/core/routes/app_routes.dart';
+import 'package:frontend/features/vocab/domain/entities/vocab_entry.dart';
 import 'package:frontend/features/wordbook/presentation/bloc/wordbook_bloc.dart';
 
 const _primaryDark = Color(0xFF152238);
@@ -82,6 +85,9 @@ class _WordbookPageState extends State<WordbookPage> {
         collocations: existing.collocations,
         note: existing.note,
         level: existing.level,
+        deck: existing.deck,
+        sourceDocId: existing.sourceDocId,
+        sourceBlockKey: existing.sourceBlockKey,
         createdAt: existing.createdAt,
         updatedAt: now,
       );
@@ -221,6 +227,16 @@ class _WordbookPageState extends State<WordbookPage> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<WordbookBloc, WordbookState>(
+      listenWhen: (previous, current) => current.errorId != previous.errorId && current.error != null,
+      listener: (context, state) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.error!), backgroundColor: _delete),
+      ),
+      child: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: ConstrainedBox(
@@ -270,7 +286,7 @@ class _WordbookPageState extends State<WordbookPage> {
             const Icon(Icons.check_circle, size: 14, color: Color(0xFF2E7D32)),
             const SizedBox(width: 6),
             Text(
-              'Saved in this browser (localStorage) — your words stay on this device.',
+              'Lưu theo tài khoản — đồng bộ trên mọi thiết bị, mở được cả khi mất mạng.',
               style: GoogleFonts.ibmPlexMono(
                 fontSize: 12,
                 color: _textSecondary,
@@ -677,6 +693,28 @@ class _WordCard extends StatelessWidget {
                       color: _textSecondary.withValues(alpha: 0.8),
                       fontStyle: FontStyle.italic,
                       height: 1.4,
+                    ),
+                  ),
+                ],
+                if (item.sourceDocId case final docId?) ...[
+                  const SizedBox(height: 8),
+                  // Nguồn: chạm để mở lại tài liệu ở đúng khối đã lưu từ.
+                  InkWell(
+                    onTap: () => context.go(AppRoutes.weeklyDoc(docId, block: item.sourceBlockKey)),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.menu_book_outlined, size: 14, color: _blueTag),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            item.deck == null || item.deck == defaultVocabDeck ? 'Mở lại trong tài liệu' : 'Mở lại trong tài liệu · ${item.deck}',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.instrumentSans(fontSize: 13, fontWeight: FontWeight.w600, color: _blueTag),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

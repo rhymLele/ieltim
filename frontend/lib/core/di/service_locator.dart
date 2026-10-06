@@ -17,5 +17,11 @@ T getSingleton<T extends Object>() {
   throw StateError('Chưa đăng ký $T. Gọi registerSingleton<$T>() trong setupDependencies().');
 }
 
+/// Như [getSingleton] nhưng trả null khi chưa đăng ký (màn cũ chạy được cả khi không có BE, vd trong test).
+T? maybeSingleton<T extends Object>() {
+  final instance = _singletons[T];
+  return instance is T ? instance : null;
+}
+
 /// Chỉ dùng trong test: xoá các đăng ký để thay bằng bản giả.
 void resetSingletons() => _singletons.clear();

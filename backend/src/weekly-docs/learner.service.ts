@@ -242,7 +242,7 @@ export class LearnerService {
     };
   }
 
-  /** Lưu từ vựng của tài liệu vào Sổ từ, bỏ trùng theo `word_norm`, không ghi đè nghĩa của từ đã có. */
+  /** Lưu từ vựng của tài liệu vào sổ mặc định, bỏ trùng theo `word_norm`, không ghi đè nghĩa của từ đã có. */
   async vocabFromDocument(userId: string, dto: VocabFromDocumentDto) {
     const doc = await this.visibleDoc(dto.documentId);
     const unique = new Map<string, VocabItem>();
@@ -350,11 +350,7 @@ export class LearnerService {
       .where('d.id = :id', { id });
     if (withHtml) qb.addSelect('d.html');
     const doc = await qb.getOne();
-    if (
-      doc?.status === DocStatus.PUBLISHED &&
-      WeeksService.stateOf(doc.weekRef!) === 'open'
-    )
-      return doc;
+    if (doc && WeeksService.docVisible(doc)) return doc;
     if (doc?.status === DocStatus.ARCHIVED)
       throw weeklyError(404, 'DOC_UNPUBLISHED', 'Tài liệu này đã được gỡ.');
     throw weeklyError(

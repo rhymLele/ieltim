@@ -52,7 +52,11 @@ class _FullscreenSlidesState extends State<FullscreenSlides> {
                 controller: deck.controller,
                 onPageChanged: deck.onPageChanged,
                 itemCount: deck.slides.length,
-                itemBuilder: (_, i) => SlideFrame(radius: 0, padding: 28, child: SlideContent(page: deck.slides[i], scale: BlockScale.slideMobile, quiz: deck.quiz)),
+                // Trình chiếu chỉ để xem: vẫn hiện ghi chú của tôi nhưng không vẽ.
+                itemBuilder: (_, i) => deck.wrapSlide(
+                  i,
+                  SlideFrame(radius: 0, padding: 28, child: SlideContent(page: deck.slides[i], scale: BlockScale.slideMobile, quiz: deck.quiz)),
+                ),
               ),
             ),
           ),

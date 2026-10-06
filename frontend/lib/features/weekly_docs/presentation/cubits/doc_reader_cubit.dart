@@ -20,6 +20,7 @@ class DocReaderState {
     this.status = LoadStatus.loading,
     this.errorMessage,
     this.doc,
+    this.docVersion = 0,
     this.slides = const [],
     this.index = 0,
     this.view = DocViewMode.slide,
@@ -34,6 +35,9 @@ class DocReaderState {
   final LoadStatus status;
   final String? errorMessage;
   final WeeklyDoc? doc;
+
+  /// Phiên bản tài liệu đang đọc (gắn vào highlight / ghi chú để biết lúc tạo admin chưa sửa bài).
+  final int docVersion;
   final List<SlidePage> slides;
 
   /// Slide đang xem (kiểu Slide).
@@ -66,6 +70,7 @@ class DocReaderState {
     LoadStatus? status,
     Object? errorMessage = keep,
     WeeklyDoc? doc,
+    int? docVersion,
     List<SlidePage>? slides,
     int? index,
     DocViewMode? view,
@@ -80,6 +85,7 @@ class DocReaderState {
         status: status ?? this.status,
         errorMessage: identical(errorMessage, keep) ? this.errorMessage : errorMessage as String?,
         doc: doc ?? this.doc,
+        docVersion: docVersion ?? this.docVersion,
         slides: slides ?? this.slides,
         index: index ?? this.index,
         view: view ?? this.view,
@@ -124,20 +130,20 @@ class DocReaderCubit extends Cubit<DocReaderState> {
 
   Future<void> load() async {
     emit(state.copyWith(status: LoadStatus.loading, errorMessage: null));
-    final Result<(WeeklyDoc, DocProgress)> loaded = isAdminPreview
+    final Result<(WeeklyDoc, DocProgress, int)> loaded = isAdminPreview
         ? switch (await _getAdminDoc.execute(docId)) {
-            Success(:final data) => Success((data.content.toDoc(), const DocProgress())),
+            Success(:final data) => Success((data.content.toDoc(), const DocProgress(), data.summary.version)),
             Failure(:final exception) => Failure(exception),
           }
         : switch (await _getLearnerDoc.execute(docId)) {
-            Success(:final data) => Success((data.doc, data.progress)),
+            Success(:final data) => Success((data.doc, data.progress, data.summary.version)),
             Failure(:final exception) => Failure(exception),
           };
     if (isClosed) return;
     switch (loaded) {
       case Failure(:final exception):
         emit(state.copyWith(status: LoadStatus.failure, errorMessage: exception.message));
-      case Success(data: (final doc, final progress)):
+      case Success(data: (final doc, final progress, final version)):
         final slides = buildSlides(doc);
         var start = 0;
         // Mở lại đúng section đang dở; đã học xong thì mở từ đầu.
@@ -150,6 +156,7 @@ class DocReaderCubit extends Cubit<DocReaderState> {
         emit(state.copyWith(
           status: LoadStatus.ready,
           doc: doc,
+          docVersion: version,
           slides: slides,
           index: start.clamp(0, slides.isEmpty ? 0 : slides.length - 1),
           view: view,

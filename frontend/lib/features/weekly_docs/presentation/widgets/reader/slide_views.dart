@@ -74,6 +74,11 @@ class SlideDeck {
     required this.onPageChanged,
     required this.onGoTo,
     required this.onComplete,
+    this.pagerKey,
+    this.physics,
+    this.selectable,
+    this.slideOverlay,
+    this.marked = const {},
   });
 
   final PageController? controller;
@@ -86,7 +91,27 @@ class SlideDeck {
   final ValueChanged<int> onGoTo;
   final VoidCallback onComplete;
 
+  /// Key giữ nguyên PageView khi vùng bôi đen bọc ngoài dựng lại (đóng hộp thoại bôi đen = dựng lại vùng được bọc
+  /// để bỏ vùng chọn); không có key thì PageView tạo mới và nhảy về slide đầu.
+  final GlobalKey? pagerKey;
+
+  /// Khoá vuốt khi đang vẽ ghi chú.
+  final ScrollPhysics? physics;
+
+  /// Bọc vùng slide để bôi đen chữ (hộp thoại sổ từ / dịch / highlight).
+  final Widget Function(Widget child)? selectable;
+
+  /// Đặt lớp ghi chú (vẽ, khoanh, chữ, ghim) đè lên khung một slide.
+  final Widget Function(SlidePage page, Widget frame)? slideOverlay;
+
+  /// Chỉ số các slide có ghi chú của tôi.
+  final Set<int> marked;
+
   bool get isLast => index >= slides.length - 1;
+
+  Widget wrapPages(Widget pages) => selectable?.call(pages) ?? pages;
+
+  Widget wrapSlide(int i, Widget frame) => slideOverlay?.call(slides[i], frame) ?? frame;
 }
 
 /// Desktop: slide 16:9 rộng tối đa 1000, nút điều hướng + chấm trang bên dưới.
@@ -107,17 +132,24 @@ class DesktopSlideBody extends StatelessWidget {
             SizedBox(
               width: width,
               height: width * 9 / 16,
-              child: PageView.builder(
-                controller: deck.controller,
-                onPageChanged: deck.onPageChanged,
-                itemCount: deck.slides.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: SlideFrame(
-                    radius: AppRadius.cardLg,
-                    padding: 44,
-                    watermark: true,
-                    child: SlideContent(page: deck.slides[i], scale: BlockScale.slideWide, quiz: deck.quiz),
+              child: deck.wrapPages(
+                PageView.builder(
+                  key: deck.pagerKey,
+                  controller: deck.controller,
+                  physics: deck.physics,
+                  onPageChanged: deck.onPageChanged,
+                  itemCount: deck.slides.length,
+                  itemBuilder: (_, i) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: deck.wrapSlide(
+                      i,
+                      SlideFrame(
+                        radius: AppRadius.cardLg,
+                        padding: 44,
+                        watermark: true,
+                        child: SlideContent(page: deck.slides[i], scale: BlockScale.slideWide, quiz: deck.quiz),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -133,7 +165,7 @@ class DesktopSlideBody extends StatelessWidget {
                   onPressed: deck.index == 0 ? null : () => deck.onGoTo(deck.index - 1),
                 ),
                 const SizedBox(width: 14),
-                SlideDots(count: deck.slides.length, index: deck.index, onTap: deck.onGoTo, size: 10),
+                SlideDots(count: deck.slides.length, index: deck.index, onTap: deck.onGoTo, size: 10, marked: deck.marked),
                 const SizedBox(width: 14),
                 NextSlideButton(
                   size: 44,
@@ -166,13 +198,20 @@ class MobileSlideBody extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: PageView.builder(
-            controller: deck.controller,
-            onPageChanged: deck.onPageChanged,
-            itemCount: deck.slides.length,
-            itemBuilder: (_, i) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: SlideFrame(radius: AppRadius.slide, padding: 20, child: SlideContent(page: deck.slides[i], scale: BlockScale.slideMobile, quiz: deck.quiz)),
+          child: deck.wrapPages(
+            PageView.builder(
+              key: deck.pagerKey,
+              controller: deck.controller,
+              physics: deck.physics,
+              onPageChanged: deck.onPageChanged,
+              itemCount: deck.slides.length,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: deck.wrapSlide(
+                  i,
+                  SlideFrame(radius: AppRadius.slide, padding: 20, child: SlideContent(page: deck.slides[i], scale: BlockScale.slideMobile, quiz: deck.quiz)),
+                ),
+              ),
             ),
           ),
         ),
@@ -210,7 +249,7 @@ class MobileSlideFooter extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SlideDots(count: deck.slides.length, index: deck.index, onTap: deck.onGoTo),
+                SlideDots(count: deck.slides.length, index: deck.index, onTap: deck.onGoTo, marked: deck.marked),
                 Text('${deck.index + 1} / ${deck.slides.length}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
               ],
             ),

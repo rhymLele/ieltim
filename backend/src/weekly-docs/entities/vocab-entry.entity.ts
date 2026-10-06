@@ -5,10 +5,11 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import { DEFAULT_VOCAB_DECK } from '../weekly-docs.constants';
 
-/** Sổ từ của người dùng (bỏ trùng theo `word_norm`). */
+/** Sổ từ của người dùng (bỏ trùng theo `word_norm` trong từng sổ `deck`). */
 @Entity('vocab_entries')
-@Unique('uq_vocab_entries_user_word', ['userId', 'wordNorm'])
+@Unique('uq_vocab_entries_user_word_deck', ['userId', 'wordNorm', 'deck'])
 export class VocabEntry {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -49,6 +50,10 @@ export class VocabEntry {
     nullable: true,
   })
   sourceBlockKey: string | null;
+
+  /** Tên sổ từ người dùng tự đặt; dữ liệu cũ nhận mặc định 'Sổ chung'. */
+  @Column({ type: 'varchar', length: 60, default: DEFAULT_VOCAB_DECK })
+  deck: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

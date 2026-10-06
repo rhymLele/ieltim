@@ -122,11 +122,14 @@ class SlideContent extends StatelessWidget {
 
 /// Dãy chấm chỉ trang slide (trang hiện tại kéo dài).
 class SlideDots extends StatelessWidget {
-  const SlideDots({super.key, required this.count, required this.index, required this.onTap, this.size = 8});
+  const SlideDots({super.key, required this.count, required this.index, required this.onTap, this.size = 8, this.marked = const {}});
   final int count;
   final int index;
   final ValueChanged<int> onTap;
   final double size;
+
+  /// Slide có ghi chú của tôi: chấm viền vàng.
+  final Set<int> marked;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +139,7 @@ class SlideDots extends StatelessWidget {
         for (var i = 0; i < count; i++)
           Semantics(
             button: true,
-            label: 'Đến slide ${i + 1}',
+            label: marked.contains(i) ? 'Đến slide ${i + 1}, có ghi chú' : 'Đến slide ${i + 1}',
             selected: i == index,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -147,7 +150,11 @@ class SlideDots extends StatelessWidget {
                   duration: motion(context, 250),
                   width: i == index ? size * 3 : size,
                   height: size,
-                  decoration: BoxDecoration(color: i == index ? AppColors.primary : AppColors.navActive, borderRadius: BorderRadius.circular(AppRadius.pill)),
+                  decoration: BoxDecoration(
+                    color: i == index ? AppColors.primary : AppColors.navActive,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: marked.contains(i) ? Border.all(color: AppColors.gold, width: 2) : null,
+                  ),
                 ),
               ),
             ),

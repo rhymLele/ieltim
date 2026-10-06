@@ -24,6 +24,8 @@ export const MAX_HTML_BYTES = 5 * 1024 * 1024;
 /** Body của API admin tài liệu (file 9 mục 7: ≥ 6 MB; dư cho phần escape JSON của file 5 MB). */
 export const ADMIN_DOC_BODY_LIMIT = '8mb';
 export const ADMIN_DOC_PATH = '/api/admin/weekly';
+/** Sổ từ mặc định: từ lưu từ tài liệu và từ thêm tay không chọn sổ. */
+export const DEFAULT_VOCAB_DECK = 'Sổ chung';
 /** File JSON import (file 7 mục 5). */
 export const IMPORT_MAX_BYTES = 1024 * 1024;
 
