@@ -8,6 +8,7 @@ import '../../features/weekly_docs/data/repositories/fake_weekly_docs_repository
 import '../../features/weekly_docs/data/repositories/weekly_docs_repository_impl.dart';
 import '../../features/weekly_docs/domain/repositories/weekly_docs_repository.dart';
 import '../network/api_client.dart';
+import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/tts_service.dart';
 import 'service_locator.dart';
@@ -20,6 +21,7 @@ void setupDependencies() {
   registerSingleton<LoggerService>(LoggerService());
   registerSingleton<ApiClient>(ApiClient());
   registerSingleton<TtsService>(TtsService());
+  registerSingleton<AnalyticsService>(AnalyticsService());
   registerSingleton<WeeklyDocsRepository>(_useFakeWeeklyDocs ? FakeWeeklyDocsRepository() : WeeklyDocsRepositoryImpl());
   registerSingleton<VocabRepository>(_useFakeWeeklyDocs ? FakeVocabRepository() : VocabRepositoryImpl());
   registerSingleton<AnnotateRepository>(AnnotateRepositoryImpl(remote: _useFakeWeeklyDocs ? FakeAnnotateRemoteDataSource() : null));

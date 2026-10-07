@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "360624119727",
+    "project_id": "ieltim",
+    "storage_bucket": "ieltim.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360624119727:android:99b30b67cc5bf30c01995a",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhQTXJ5UMBVjjdFiE1JPVlZ_4yPfO5wEQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,6 +16,7 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
+    apply(plugin = "org.jetbrains.kotlin.android")
     project.evaluationDependsOn(":app")
 }
 

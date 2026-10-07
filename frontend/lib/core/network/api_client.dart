@@ -14,7 +14,7 @@ class ApiClient {
   final Dio _dio;
 
   static BaseOptions _buildDefaultOptions({String? baseUrl}) => BaseOptions(
-    baseUrl: baseUrl ?? AppEnv.product.baseUrl,
+    baseUrl: baseUrl ?? AppEnv.current.baseUrl,
     connectTimeout: const Duration(seconds: 10),
     sendTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
