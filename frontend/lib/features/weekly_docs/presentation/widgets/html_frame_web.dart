@@ -9,6 +9,7 @@ import 'dart:js_interop';
 import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
+import '../../../../core/routes/popup_route_tracker.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'annotate/html_bridge.dart';
 import 'html_bridge_controller.dart';
@@ -38,6 +39,26 @@ class _HtmlFrameState extends State<HtmlFrame> {
   web.HTMLIFrameElement? _frame;
   JSFunction? _listener;
 
+  /// Bên ngoài xin cho chuột đi xuyên iframe (đang cầm bút, hộp thoại bôi đen đang mở).
+  bool _passthrough = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PopupRouteTracker.changes.addListener(_applyPointerEvents);
+  }
+
+  /// Flutter vẽ đè lên iframe nhưng chuột vẫn rơi vào iframe: có popup (form Sổ từ, Ghi chú của tôi, hộp thoại xác nhận…)
+  /// hoặc lớp vẽ / hộp thoại phía trên thì iframe nhường chuột cho Flutter.
+  void _applyPointerEvents() {
+    _frame?.style.pointerEvents = _passthrough || PopupRouteTracker.hasOpenPopup ? 'none' : '';
+  }
+
+  void _setPassthrough(bool on) {
+    _passthrough = on;
+    _applyPointerEvents();
+  }
+
   bool get _bridged => widget.onBridgeMessage != null;
 
   String get _source => _bridged ? injectAnnotateBridge(widget.html) : widget.html;
@@ -59,6 +80,7 @@ class _HtmlFrameState extends State<HtmlFrame> {
       widget.onLoaded?.call();
     }).toJS;
     _frame = f;
+    _applyPointerEvents();
     if (_bridged) {
       final listener = ((web.MessageEvent e) => _onMessage(e)).toJS;
       _listener = listener;
@@ -66,7 +88,7 @@ class _HtmlFrameState extends State<HtmlFrame> {
     }
     widget.bridge?.attach(
       send: (command) => f.contentWindow?.postMessage(command.jsify(), '*'.toJS),
-      setPassthrough: (on) => f.style.pointerEvents = on ? 'none' : '',
+      setPassthrough: _setPassthrough,
     );
   }
 
@@ -89,7 +111,7 @@ class _HtmlFrameState extends State<HtmlFrame> {
       if (f != null) {
         widget.bridge?.attach(
           send: (command) => f.contentWindow?.postMessage(command.jsify(), '*'.toJS),
-          setPassthrough: (on) => f.style.pointerEvents = on ? 'none' : '',
+          setPassthrough: _setPassthrough,
         );
       }
     }
@@ -97,6 +119,7 @@ class _HtmlFrameState extends State<HtmlFrame> {
 
   @override
   void dispose() {
+    PopupRouteTracker.changes.removeListener(_applyPointerEvents);
     final listener = _listener;
     if (listener != null) web.window.removeEventListener('message', listener);
     widget.bridge?.detach();

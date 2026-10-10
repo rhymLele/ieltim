@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../storage/token_storage.dart';
 import 'app_routes.dart';
+import 'popup_route_tracker.dart';
 import 'redirect_path.dart';
 import '../../features/auth/presentation/views/access_key_page.dart';
 import '../../features/home/presentation/views/home_page.dart';
@@ -46,6 +47,7 @@ GoRouterPageBuilder _tabPage(GoRouterWidgetBuilder builder) =>
 /// Trang cần Bloc thì tạo provider ngay tại route, để mở thẳng bằng URL vẫn chạy.
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.access,
+  observers: [PopupRouteTracker()],
   // Đường dẫn không khớp trang nào: trang 404 có nút về trang chủ.
   errorBuilder: (context, state) => NotFoundPage(path: state.uri.path),
   redirect: (context, state) async {
@@ -67,6 +69,8 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const AccessKeyPage(),
     ),
     ShellRoute(
+      // Bottom sheet mở trong khung (vd form Sổ từ ở màn đọc) nằm trên Navigator của shell.
+      observers: [PopupRouteTracker()],
       builder: (context, state, child) => AppLayout(location: state.uri.path, child: child),
       routes: [
         GoRoute(
